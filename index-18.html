@@ -1,0 +1,3062 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>CMR Application</title>
+  <meta name="theme-color" content="#0f5c4a">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f5c4a'/%3E%3Ctext x='50' y='63' font-size='32' font-family='Arial,sans-serif' font-weight='700' fill='white' text-anchor='middle'%3ECMR%3C/text%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f5c4a'/%3E%3Ctext x='50' y='63' font-size='32' font-family='Arial,sans-serif' font-weight='700' fill='white' text-anchor='middle'%3ECMR%3C/text%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+  <style>
+    :root {
+      --primary: #0f5c4a;
+      --primary-light: #1a7a62;
+      --primary-dark: #0a3d31;
+      --secondary: #f0ede5;
+      --accent: #e8a838;
+      --white: #ffffff;
+      --gray: #888888;
+      --light-gray: #f5f5f5;
+      --border: #e0ddd5;
+      --shadow: 0 4px 20px rgba(0,0,0,0.08);
+      --shadow-md: 0 2px 6px rgba(0,0,0,0.15);
+      --radius: 14px;
+      --radius-sm: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: var(--secondary);
+      color: #1a1a1a;
+      padding: 0 10px 24px;
+      min-height: 100vh;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    }
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      padding-top: calc(14px + env(safe-area-inset-top));
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-radius: 0 0 18px 18px;
+      box-shadow: var(--shadow-md);
+      margin: 0 -10px 14px;
+      color: var(--white);
+    }
+    .app-header .logo { display: flex; align-items: center; gap: 10px; }
+    .app-header .logo .icon {
+      font-size: 22px;
+      background: rgba(255,255,255,0.18);
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .app-header .logo h1 { font-size: 1.05rem; font-weight: 700; }
+    .app-header .logo span { font-size: 0.65rem; color: rgba(255,255,255,0.75); display: block; }
+    .app-header .badge { background: var(--accent); padding: 3px 10px; border-radius: 20px; font-size: 0.6rem; font-weight: 600; }
+    .tab { display: none; }
+    .tab.active { display: block; }
+    .home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .home-btn {
+      background: var(--white); border: none; border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: 22px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px; font-weight: 700; font-size: 0.85rem; color: #333; cursor: pointer; text-align: center;
+      transition: transform 0.15s ease; min-height: 130px;
+    }
+    .home-btn:active { transform: scale(0.96); }
+    .home-icon-circle {
+      width: 56px; height: 56px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(15,92,74,0.3);
+      background: linear-gradient(135deg, var(--primary-light), var(--primary));
+    }
+    .home-emoji { font-size: 1.7rem; line-height: 1; }
+    .back-btn { margin-bottom: 12px; }
+    .panel { background: var(--white); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); margin-bottom: 12px; }
+    .panel-title { font-size: 0.95rem; font-weight: 700; color: var(--primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .panel-title .badge-count { background: var(--light-gray); color: var(--gray); font-size: 0.65rem; padding: 1px 10px; border-radius: 12px; font-weight: 600; }
+    .row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .field { flex: 1; min-width: 110px; }
+    .field label { display: block; font-size: 0.65rem; font-weight: 600; color: var(--gray); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
+    input, select, textarea {
+      width: 100%; padding: 10px 12px; border: 2px solid var(--border); border-radius: var(--radius-sm);
+      font-size: 0.85rem; font-family: inherit; transition: border-color 0.3s ease; background: var(--white);
+      -webkit-appearance: none; appearance: none;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(15,92,74,0.1); }
+    input[readonly] { background: var(--light-gray); color: var(--gray); cursor: not-allowed; }
+    textarea { min-height: 50px; resize: vertical; }
+    .btn {
+      padding: 10px 18px; border: none; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.8rem;
+      cursor: pointer; transition: all 0.15s ease; display: inline-flex; align-items: center; gap: 6px;
+      min-height: 46px; justify-content: center;
+    }
+    .btn-primary { background: var(--primary); color: var(--white); box-shadow: var(--shadow-md); }
+    .btn-primary:hover { background: var(--primary-light); }
+    .btn-primary:active { transform: scale(0.97); }
+    .btn-secondary { background: var(--light-gray); color: #333; }
+    .btn-secondary:hover { background: #e5e5e5; }
+    .btn-success { background: #27ae60; color: var(--white); box-shadow: var(--shadow-md); }
+    .btn-success:hover { background: #1e8449; }
+    .btn-danger { background: #e74c3c; color: var(--white); box-shadow: var(--shadow-md); }
+    .btn-danger:hover { background: #c0392b; }
+    .btn-warning { background: #e67e22; color: var(--white); box-shadow: var(--shadow-md); }
+    .btn-warning:hover { background: #d35400; }
+    .btn-sm { padding: 4px 10px; font-size: 0.65rem; min-height: 32px; border-radius: 6px; }
+    .btn-ghost { background: transparent; color: var(--gray); padding: 4px 8px; min-height: 30px; }
+    .btn-ghost:hover { background: var(--light-gray); }
+    .btn-group { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .btn-group .btn { flex: 1; min-width: 100px; }
+    .status { font-size: 0.8rem; margin-top: 6px; padding: 6px 12px; border-radius: var(--radius-sm); display: none; }
+    .status.success { display: block; color: #27ae60; background: #eafaf1; }
+    .status.error { display: block; color: #e74c3c; background: #fdedec; }
+    .status.info { display: block; color: #2980b9; background: #eaf2f8; }
+    .vehicle-card {
+      background: var(--white); border-radius: var(--radius-sm); box-shadow: var(--shadow);
+      padding: 14px; margin-bottom: 10px; border-left: 5px solid var(--primary);
+    }
+    .vehicle-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .vehicle-plate { font-weight: 700; font-size: 0.95rem; color: var(--primary); }
+    .vehicle-type-label {
+      font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 700;
+      padding: 3px 10px; border-radius: 12px; color: #fff;
+    }
+    .vehicle-type-label.camion-label { background: #1a5276; }
+    .vehicle-type-label.remorque-label { background: #7d6608; }
+    .vehicle-card-compact {
+      background: var(--white); border-radius: var(--radius-sm); box-shadow: var(--shadow);
+      padding: 8px; margin-bottom: 8px; border-left: 4px solid var(--primary); font-size: 0.72rem;
+    }
+    .vehicle-card-compact .vc-plate { font-weight: 700; font-size: 0.78rem; color: var(--primary); display: block; }
+    .vehicle-card-compact .vc-type { font-size: 0.55rem; text-transform: uppercase; font-weight: 700; color: #fff; padding: 1px 6px; border-radius: 8px; display: inline-block; margin-top: 2px; }
+    .vehicle-card-compact .vc-type.camion-label { background: #1a5276; }
+    .vehicle-card-compact .vc-type.remorque-label { background: #7d6608; }
+    .vehicle-card-compact .vc-line { margin-top: 4px; line-height: 1.25; word-break: break-word; }
+    .empty { color: var(--gray); font-size: 0.8rem; padding: 16px 0; text-align: center; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.75rem; min-width: 400px; }
+    th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--border); }
+    th { color: var(--primary); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: flex-end; padding: 0;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--white); padding: 10px 18px 22px;
+      border-radius: 20px 20px 0 0; max-width: 600px; width: 100%; max-height: 88vh;
+      overflow-y: auto; box-shadow: 0 -8px 30px rgba(0,0,0,0.25); animation: sheetUp 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .modal::before { content: ''; display: block; width: 40px; height: 4px; background: var(--border); border-radius: 4px; margin: 4px auto 14px; }
+    @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    @media (min-width: 601px) {
+      .modal-overlay { align-items: center; padding: 16px; }
+      .modal { border-radius: var(--radius); max-height: 90vh; animation: modalIn 0.25s ease; }
+      .modal::before { display: none; }
+    }
+    @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    .modal h2 { color: var(--primary); font-size: 1.1rem; margin-bottom: 12px; }
+    .modal .btn-group { margin-top: 12px; }
+    .modal .btn-group .btn { flex: 1; }
+    .status-pill { display: inline-block; font-size: 0.68rem; font-weight: 600; padding: 5px 11px; border-radius: 20px; margin: 2px 4px 2px 0; color: #fff; }
+    .status-pill.status-ok { background: #27ae60; }
+    .status-pill.status-warning { background: #e8a838; }
+    .status-pill.status-expired { background: #e74c3c; }
+    .status-pill.status-unknown { background: #999; }
+    .section-title { font-size: 0.65rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin: 14px 0 6px; padding-bottom: 4px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 6px; }
+    .section-title .num { background: var(--primary); color: var(--white); width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.5rem; font-weight: 700; flex-shrink: 0; }
+    .damage-card { display: flex; gap: 10px; background: var(--light-gray); border-radius: var(--radius-sm); padding: 10px; margin-bottom: 10px; border-left: 4px solid #e8a838; }
+    .damage-thumb { width: 62px; height: 62px; object-fit: cover; border-radius: 8px; cursor: pointer; flex-shrink: 0; }
+    @media (max-width: 600px) {
+      body { padding: 8px; }
+      .app-header { flex-direction: column; align-items: flex-start; gap: 4px; }
+      .app-header .badge { align-self: flex-start; }
+      .row { flex-direction: column; }
+      .field { min-width: 100%; }
+      .btn-group { flex-direction: column; }
+      .btn-group .btn { width: 100%; }
+      .modal { padding: 16px; }
+    }
+    @media print {
+      body > *:not(#printArea) { display: none !important; }
+      #printArea { display: block !important; }
+      body { background: white; padding: 0; margin: 0; }
+    }
+    .wizard-progress-wrap { margin-bottom: 16px; }
+    .wizard-progress-label { font-size: 0.72rem; font-weight: 700; color: var(--primary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .wizard-progress-bar { height: 7px; background: var(--light-gray); border-radius: 4px; overflow: hidden; }
+    .wizard-progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary-light), var(--primary)); border-radius: 4px; transition: width 0.3s ease; }
+    .wizard-step { animation: wizardFadeIn 0.25s ease; }
+    @keyframes wizardFadeIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+    .wizard-nav { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+    .wizard-nav .btn { flex: 1; min-width: 100px; }
+    .wizard-nav #wizardPrevBtn { flex: 0 0 auto; min-width: 44px; }
+    .line-item { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+    .line-item input { flex: 1; min-width: 60px; padding: 8px 10px; border: 2px solid var(--border); border-radius: var(--radius-sm); font-size: 0.8rem; }
+    .btn-add-line { background: var(--primary); color: var(--white); padding: 6px 14px; border: none; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; font-size: 0.75rem; min-height: 38px; }
+    .btn-remove-line { background: #e74c3c; color: var(--white); padding: 4px 10px; border: none; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; font-size: 0.65rem; min-height: 32px; }
+    .checks { display: flex; gap: 12px; font-size: 0.8rem; margin-top: 4px; flex-wrap: wrap; }
+    .checks label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500; padding: 4px 0; }
+    .checks input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--primary); cursor: pointer; min-width: 20px; }
+    .signature-preview { border: 2px dashed var(--border); border-radius: var(--radius-sm); padding: 10px; text-align: center; min-height: 60px; display: flex; align-items: center; justify-content: center; background: var(--light-gray); margin-top: 4px; }
+    .signature-preview img { max-height: 50px; max-width: 100%; }
+    .signature-preview .placeholder { color: var(--gray); font-size: 0.8rem; }
+    .damage-badge { margin-left: auto; background: #fdedec; color: #c0392b; font-size: 0.62rem; font-weight: 700; padding: 4px 9px; border-radius: 20px; }
+    .damage-badge-open { margin-left: auto; background: #fdf3e0; color: #b8860b; font-size: 0.62rem; font-weight: 700; padding: 4px 9px; border-radius: 20px; }
+    .doc-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .doc-row:last-child { border-bottom: none; }
+    .doc-row-label { flex: 1 1 140px; font-size: 0.82rem; font-weight: 600; }
+    .doc-row-status { font-size: 1rem; }
+    .doc-row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+<div id="syncIndicator" style="position:fixed;top:6px;right:8px;z-index:9999;font-size:0.72rem;background:rgba(255,255,255,0.92);padding:2px 8px;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.15);">🔄 Connexion...</div>
+
+<div class="app-header">
+  <div class="logo">
+    <span class="icon">📄</span>
+    <div>
+      <h1>CMR Application</h1>
+      <span>Gestion des lettres de voiture</span>
+    </div>
+  </div>
+  <span class="badge">v2.12</span>
+</div>
+
+<!-- ====== TAB CONNEXION ====== -->
+<div class="tab active" id="tab-login">
+  <div class="panel" style="margin-top:30px;">
+    <div class="panel-title" style="justify-content:center;">🔐 Connexion</div>
+    <div id="loginRoleChoice">
+      <div class="home-grid" style="margin-top:10px;">
+        <button class="home-btn" style="grid-column:span 2;" onclick="showLoginView('admin')">
+          <span class="home-icon-circle"><span class="home-emoji">👤</span></span>
+          <span>Administrateur</span>
+        </button>
+        <button class="home-btn" style="grid-column:span 2;" onclick="showLoginView('driver')">
+          <span class="home-icon-circle"><span class="home-emoji">🚚</span></span>
+          <span>Chauffeur</span>
+        </button>
+      </div>
+      <button class="btn btn-ghost" style="width:100%;margin-top:16px;font-size:0.75rem;color:#999;" onclick="resetAllDataPrompt()">🗑️ Stockage plein / problème ? Réinitialiser les données</button>
+    </div>
+    <div id="loginAdminView" style="display:none;">
+      <button class="btn btn-ghost" onclick="showLoginView('choice')" style="margin-bottom:12px;">◀ Retour</button>
+      <div id="loginAdminSetup" style="display:none;">
+        <p style="font-size:0.82rem;color:#666;margin-bottom:10px;">Première utilisation — crée le premier compte administrateur.</p>
+        <div class="row"><div class="field" style="flex:1 1 100%;"><label>Ton nom</label><input id="adminSetupNom" placeholder="Ex: Karim"></div></div>
+        <div class="row">
+          <div class="field"><label>Nouveau code</label><input type="password" inputmode="numeric" maxlength="4" id="adminPinNew" placeholder="••••"></div>
+          <div class="field"><label>Confirmer</label><input type="password" inputmode="numeric" maxlength="4" id="adminPinConfirm" placeholder="••••"></div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;" onclick="createAdminPin()">✅ Créer mon code</button>
+      </div>
+      <div id="loginAdminEnter" style="display:none;">
+        <div class="row"><div class="field" style="flex:1 1 100%;"><label>Ton nom</label><select id="loginAdminSelect"><option value="">— Sélectionner —</option></select></div></div>
+        <div class="row"><div class="field" style="flex:1 1 100%;"><label>Code administrateur</label><input type="password" inputmode="numeric" maxlength="4" id="adminPinInput" placeholder="••••"></div></div>
+        <button class="btn btn-primary" style="width:100%;" onclick="loginAsAdmin()">🔓 Se connecter</button>
+      </div>
+      <div class="status" id="statusLoginAdmin"></div>
+    </div>
+    <div id="loginDriverView" style="display:none;">
+      <button class="btn btn-ghost" onclick="showLoginView('choice')" style="margin-bottom:12px;">◀ Retour</button>
+      <div class="row"><div class="field" style="flex:1 1 100%;"><label>Ton nom</label><select id="loginDriverSelect"><option value="">— Sélectionner —</option></select></div></div>
+      <div class="row"><div class="field" style="flex:1 1 100%;"><label>Ton code</label><input type="password" inputmode="numeric" maxlength="4" id="driverPinInput" placeholder="••••"></div></div>
+      <button class="btn btn-primary" style="width:100%;" onclick="loginAsDriver()">🔓 Se connecter</button>
+      <div class="status" id="statusLoginDriver"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== TAB HOME ====== -->
+<div class="tab" id="tab-home">
+  <div class="home-grid">
+    <button class="home-btn" style="grid-column:span 2;min-height:110px;" onclick="showTab('cmr-menu')">
+      <span class="home-icon-circle"><span class="home-emoji">📄</span></span>
+      <span>CMR</span>
+    </button>
+    <button class="home-btn" style="grid-column:span 2;min-height:110px;" onclick="showTab('vehicle-menu')">
+      <span class="home-icon-circle"><span class="home-emoji">🚚</span></span>
+      <span>Véhicule</span>
+    </button>
+    <button class="home-btn" style="grid-column:span 2;" onclick="showTab('drivers')">
+      <span class="home-icon-circle"><span class="home-emoji">👥</span></span>
+      <span>Chauffeurs</span>
+    </button>
+    <button class="home-btn" style="grid-column:span 2;" onclick="showTab('fleet')">
+      <span class="home-icon-circle"><span class="home-emoji">🗺️</span></span>
+      <span>Tous les véhicules</span>
+    </button>
+    <button class="home-btn" style="grid-column:span 2;" onclick="showTab('backup')">
+      <span class="home-icon-circle"><span class="home-emoji">💾</span></span>
+      <span>Sauvegarde</span>
+    </button>
+    <button class="home-btn" style="grid-column:span 2;" onclick="showTab('arrivals')">
+      <span class="home-icon-circle"><span class="home-emoji">🕐</span></span>
+      <span>Pointeuse</span>
+    </button>
+    <button class="home-btn" style="grid-column:span 2;" onclick="showTab('damages')">
+      <span class="home-icon-circle"><span class="home-emoji">⚠️</span></span>
+      <span>Dégâts</span>
+    </button>
+    <button class="home-btn" style="grid-column:span 2;" onclick="showTab('admins')">
+      <span class="home-icon-circle"><span class="home-emoji">🔑</span></span>
+      <span>Administrateurs</span>
+    </button>
+  </div>
+  <button class="btn btn-ghost" onclick="logout()" style="width:100%;margin-top:16px;">🔓 Déconnexion</button>
+</div>
+
+<!-- ====== TAB ADMINISTRATEURS ====== -->
+<div class="tab" id="tab-admins">
+  <button class="btn btn-secondary back-btn" onclick="showTab('home')">⬅ Retour</button>
+  <div class="panel">
+    <div class="panel-title">🔑 Administrateurs <span class="badge-count" id="adminCount">0</span></div>
+    <div class="row">
+      <div class="field" style="flex:2;"><label>Nom *</label><input id="adminNom" placeholder="Ex: Karim"></div>
+      <div class="field"><label>Code (4 chiffres) *</label><input type="password" inputmode="numeric" maxlength="4" id="adminNewPin" placeholder="••••"></div>
+    </div>
+    <button class="btn btn-success" onclick="addAdmin()">➕ Ajouter</button>
+    <div class="status" id="statusAdmins"></div>
+    <div class="table-wrap" style="margin-top:10px;">
+      <table><thead><tr><th>Nom</th><th>Actions</th></tr></thead><tbody id="adminsBody"></tbody></table>
+    </div>
+    <div class="empty" id="emptyAdmins" style="display:none;">Aucun administrateur</div>
+  </div>
+</div>
+
+<!-- ====== TAB CHAUFFEURS ====== -->
+<div class="tab" id="tab-drivers">
+  <button class="btn btn-secondary back-btn" onclick="showTab('home')">⬅ Retour</button>
+  <div class="panel">
+    <div class="panel-title">👥 Chauffeurs <span class="badge-count" id="driverCount">0</span></div>
+    <div class="row">
+      <div class="field" style="flex:2;"><label>Nom *</label><input id="driverNom" placeholder="Ex: Karim"></div>
+      <div class="field"><label>Code (4 chiffres) *</label><input type="password" inputmode="numeric" maxlength="4" id="driverPin" placeholder="••••"></div>
+    </div>
+    <button class="btn btn-success" onclick="addDriver()">➕ Ajouter</button>
+    <div class="status" id="statusAssignment"></div>
+    <div class="status" id="statusDrivers"></div>
+    <div class="table-wrap" style="margin-top:10px;">
+      <table><thead><tr><th>Nom</th><th>Véhicule attribué</th><th>Actions</th></tr></thead><tbody id="driversBody"></tbody></table>
+    </div>
+    <div class="empty" id="emptyDrivers" style="display:none;">Aucun chauffeur</div>
+  </div>
+</div>
+
+<!-- ====== TAB FLEET ====== -->
+<div class="tab" id="tab-fleet">
+  <button class="btn btn-secondary back-btn" onclick="showTab('home')">⬅ Retour</button>
+  <div class="panel">
+    <div class="panel-title">🗺️ Tous les véhicules <span class="badge-count" id="fleetCount">0</span></div>
+    <div class="empty" id="emptyFleet" style="display:none;">Aucun véhicule</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div>
+        <div class="section-title" style="margin-top:0;"><span class="num">✅</span> Disponibles <span class="badge-count" id="fleetAvailableCount">0</span></div>
+        <div id="fleetAvailableList"></div>
+        <div class="empty" id="emptyFleetAvailable" style="display:none;font-size:0.75rem;">Aucun</div>
+      </div>
+      <div>
+        <div class="section-title" style="margin-top:0;"><span class="num">🚚</span> Utilisés <span class="badge-count" id="fleetUsedCount">0</span></div>
+        <div id="fleetUsedList"></div>
+        <div class="empty" id="emptyFleetUsed" style="display:none;font-size:0.75rem;">Aucun</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== TAB ACCUEIL CHAUFFEUR ====== -->
+<div class="tab" id="tab-driver-home">
+  <div class="panel" style="margin-top:20px;">
+    <div class="panel-title">🚚 Bonjour <span id="driverHomeName"></span></div>
+    <div id="driverArrivalBox"></div>
+    <div id="driverCurrentVehicle"></div>
+    <div class="status" id="statusDriverHome"></div>
+    <button class="btn btn-ghost" onclick="logout()" style="width:100%;margin-top:18px;">🔓 Déconnexion</button>
+  </div>
+</div>
+
+<!-- ====== TAB PARKING CHAUFFEUR ====== -->
+<div class="tab" id="tab-parking-driver">
+  <button class="btn btn-secondary back-btn" onclick="showTab('driver-home')">⬅ Retour</button>
+  <div class="panel">
+    <div class="panel-title">🚚 Ma remorque</div>
+    <div id="driverCurrentTrailer"></div>
+    <div class="status" id="statusParkingDriver"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">🔗 Remorques libres</div>
+    <div id="freeTrailersList"></div>
+    <div class="empty" id="emptyFreeTrailers" style="display:none;">Aucune remorque libre</div>
+  </div>
+</div>
+
+<!-- ====== TAB PRENDRE VEHICULE ====== -->
+<div class="tab" id="tab-take-vehicle">
+  <button class="btn btn-secondary back-btn" onclick="showTab('driver-home')">⬅ Retour</button>
+  <div class="panel">
+    <div class="panel-title">🚛 Prendre un véhicule</div>
+    <div class="row">
+      <div class="field"><label>Camion *</label><select id="takeCamion"><option value="">— Sélectionner —</option></select></div>
+      <div class="field"><label>Remorque</label><select id="takeRemorque"><option value="">— Sélectionner —</option></select></div>
+    </div>
+    <div class="section-title"><span class="num">📸</span> Photos obligatoires</div>
+    <div class="row">
+      <div class="field">
+        <label>Tableau de bord</label>
+        <button class="btn btn-secondary" style="width:100%;" onclick="openCamera('dashboard')">📷 Prendre la photo</button>
+        <div id="takeDashboardPreview" style="margin-top:6px;"></div>
+      </div>
+      <div class="field">
+        <label>État intérieur</label>
+        <button class="btn btn-secondary" style="width:100%;" onclick="openCamera('interior')">📷 Prendre la photo</button>
+        <div id="takeInteriorPreview" style="margin-top:6px;"></div>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="confirmTakeVehicle()">✅ Confirmer</button>
+    <div class="status" id="statusTakeVehicle"></div>
+  </div>
+</div>
+
+<!-- ====== TAB RENDRE VEHICULE ====== -->
+<div class="tab" id="tab-return-vehicle">
+  <button class="btn btn-secondary back-btn" onclick="showTab('driver-home')">⬅ Retour</button>
+  <div class="panel">
+    <div class="panel-title">↩️ Rendre</div>
+    <div class="field"><label>📍 Parking</label><select id="returnParkingSelect"><option value="">— Sans emplacement —</option></select></div>
+    <div class="section-title"><span class="num">📸</span> Photos obligatoires</div>
+    <div class="row">
+      <div class="field">
+        <label>Tableau de bord</label>
+        <button class="btn btn-secondary" style="width:100%;" onclick="openReturnCamera('dashboard')">📷 Prendre la photo</button>
+        <div id="returnDashboardPreview" style="margin-top:6px;"></div>
+      </div>
+      <div class="field">
+        <label>État intérieur</label>
+        <button class="btn btn-secondary" style="width:100%;" onclick="openReturnCamera('interior')">📷 Prendre la photo</button>
+        <div id="returnInteriorPreview" style="margin-top:6px;"></div>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="confirmReturnVehicle()">✅ Confirmer</button>
+    <div class="status" id="statusReturnVehicle"></div>
+  </div>
+</div>
+
+<!-- ====== TAB MENU CMR ====== -->
+<div class="tab" id="tab-cmr-menu">
+  <button class="btn btn-secondary back-btn" onclick="showTab('home')">⬅ Retour</button>
+  <div class="home-grid" style="margin-top:14px;">
+    <button class="home-btn" onclick="showTab('form')"><span class="home-icon-circle"><span class="home-emoji">📄</span></span><span>Créer CMR</span></button>
+    <button class="home-btn" onclick="showTab('add-menu')"><span class="home-icon-circle"><span class="home-emoji">➕</span></span><span>Ajouter</span></button>
+    <button class="home-btn" onclick="showTab('history')"><span class="home-icon-circle"><span class="home-emoji">🗂</span></span><span>CMR enregistrés</span></button>
+    <button class="home-btn" onclick="showTab('send')"><span class="home-icon-circle"><span class="home-emoji">📤</span></span><span>Envoyer CMR</span></button>
+  </div>
+</div>
+
+<!-- ====== TAB MENU VEHICULE ====== -->
+<div class="tab" id="tab-vehicle-menu">
+  <button class="btn btn-secondary back-btn" onclick="showTab('home')">⬅ Retour</button>
+  <div class="home-grid" style="margin-top:14px;">
+    <button class="home-btn" onclick="showTab('add-plate')"><span class="home-icon-circle"><span class="home-emoji">🔢</span></span><span>Ajouter plaque</span></button>
+    <button class="home-btn" onclick="showTab('vehicles')"><span class="home-icon-circle"><span class="home-emoji">🚛</span></span><span>Mes véhicules</span></button>
+    <button class="home-btn" onclick="showTab('parking-admin')"><span class="home-icon-circle"><span class="home-emoji">🅿️</span></span><span>Parking</span></button>
+  </div>
+</div>
+
+<!-- ====== TAB PARKING ADMIN ====== -->
+<div class="tab" id="tab-parking-admin">
+  <button class="btn btn-secondary back-btn" onclick="showTab('vehicle-menu')">⬅ Retour</button>
+  <div class="panel">
+    <div class="panel-title">🅿️ Emplacements</div>
+    <div class="row"><div class="field" style="flex:2;"><label>Nom *</label><input id="parkingNom" placeholder="Ex: Parking Liège 1"></div></div>
+    <button class="btn btn-success" onclick="addParking()">➕ Ajouter</button>
+    <div class="status" id="statusParking"></div>
+    <div id="parkingsList" style="margin-top:10px;"></div>
+    <div class="empty" id="emptyParkings" style="display:none;">Aucun parking</div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">🚛 Camions</div>
+    <div id="trucksStatusList"></div>
+    <div class="empty" id="emptyTrucksStatus" style="display:none;">Aucun camion</div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">🚚 Remorques</div>
+    <div id="trailerStatusList"></div>
+    <div class="empty" id="emptyTrailersStatus" style="display:none;">Aucune remorque</div>
+  </div>
+</div>
+
+<!-- ====== TAB DEGATS ====== -->
+<div class="tab" id="tab-damages">
+  <button class="btn btn-secondary back-btn" onclick="showTab('home')">⬅ Retour</button>
+  <button class="btn btn-primary" style="width:100%;" onclick="exportDamagesWhatsApp()">📤 Envoyer sur WhatsApp</button>
+  <div class="status" id="statusDamagesExport"></div>
+  <div class="panel">
+    <div class="panel-title">⚠️ Dégâts en cours</div>
+    <div id="damagesOpenList"></div>
+    <div class="empty" id="emptyDamagesOpen" style="display:none;">Aucun dégât ✅</div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">✅ Dégâts réparés</div>
+    <div id="damagesRepairedList"></div>
+    <div class="empty" id="emptyDamagesRepaired" style="display:none;">Aucun</div>
+  </div>
+</div>
+
+<!-- ====== TAB ARRIVEES ====== -->
+<div class="tab" id="tab-arrivals">
+  <button class="btn btn-secondary back-btn" onclick="showTab('home')">⬅ Retour</button>
+  <div class="panel">
+    <div class="panel-title">✏️ Pointage</div>
+    <div class="field"><label>Chauffeur</label><select id="arrivalDriverSelect"><option value="">— Sélectionner —</option></select></div>
+    <div class="row">
+      <div class="field"><label>Date</label><input type="date" id="arrivalDateInput"></div>
+      <div class="field"><label>Arrivée</label><input type="time" id="arrivalTimeInput"></div>
+      <div class="field"><label>Départ</label><input type="time" id="departTimeInput"></div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;" onclick="adminSetArrival()">💾 Enregistrer</button>
+    <div class="status" id="statusArrivalsForm"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">🕐 Aujourd'hui</div>
+    <div id="arrivalsToday"></div>
+    <div class="empty" id="emptyArrivals" style="display:none;">Aucun pointage</div>
+    <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="exportPointeusePdf()">📤 Exporter le pointage en PDF</button>
+    <div class="status" id="statusArrivalsExport"></div>
+  </div>
+</div>
+
+<!-- ====== TAB SAUVEGARDE ====== -->
+<div class="tab" id="tab-backup">
+  <button class="btn btn-secondary back-btn" onclick="showTab('home')">⬅ Retour</button>
+  <div class="panel">
+    <div class="panel-title">💾 Sauvegarde</div>
+    <div id="backupCount" style="font-size:0.82rem;color:#444;margin-bottom:14px;"></div>
+    <button class="btn btn-primary" style="width:100%;" onclick="exportAllData()">⬇️ Exporter</button>
+    <div style="margin-top:16px;">
+      <label style="font-size:0.8rem;color:#444;display:block;margin-bottom:6px;">Importer :</label>
+      <input type="file" accept=".json,application/json" onchange="importDataFile(event)" style="padding:4px;font-size:0.75rem;">
+    </div>
+    <button class="btn btn-danger" style="width:100%;margin-top:10px;" onclick="forceCleanStorage()">🧹 Nettoyer</button>
+    <div class="status" id="statusBackup"></div>
+  </div>
+</div>
+
+<!-- ====== TAB AJOUTER ====== -->
+<div class="tab" id="tab-add-menu">
+  <button class="btn btn-secondary back-btn" onclick="showTab('cmr-menu')">⬅ Retour</button>
+  <div class="home-grid" style="margin-top:14px;">
+    <button class="home-btn" onclick="showTab('add-client')"><span class="home-icon-circle"><span class="home-emoji">👤</span></span><span>Client</span></button>
+    <button class="home-btn" onclick="showTab('add-carrier')"><span class="home-icon-circle"><span class="home-emoji">🚛</span></span><span>Transporteur</span></button>
+    <button class="home-btn" onclick="showTab('add-plate')"><span class="home-icon-circle"><span class="home-emoji">🔢</span></span><span>Plaque</span></button>
+  </div>
+</div>
+
+<!-- ====== TAB CLIENTS ====== -->
+<div class="tab" id="tab-add-client">
+  <button class="btn btn-secondary back-btn" onclick="showTab('add-menu')">⬅ Retour</button>
+  <div class="panel">
+    <div class="panel-title">👤 Clients <span class="badge-count" id="partnerCount">0</span></div>
+    <div class="row">
+      <div class="field"><label>Nom *</label><input id="pNom" placeholder="Ex: WFS"></div>
+      <div class="field"><label>Adresse</label><input id="pAdr" placeholder="Ex: Rue St Exupery 17"></div>
+      <div class="field"><label>État</label><input id="pEtat" placeholder="Ex: B-4460 Bierset"></div>
+    </div>
+    <button class="btn btn-success" onclick="addPartner()">➕ Ajouter</button>
+    <div class="status" id="statusP"></div>
+    <div class="table-wrap" style="margin-top:10px;">
+      <table><thead><tr><th>Nom</th><th>Adresse</th><th>État</th><th>Actions</th></tr></thead><tbody id="partnersBody"></tbody></table>
+    </div>
+    <div class="empty" id="emptyP" style="display:none;">Aucun client</div>
+  </div>
+</div>
+
+<!-- ====== TAB TRANSPORTEURS ====== -->
+<div class="tab" id="tab-add-carrier">
+  <button class="btn btn-secondary back-btn" onclick="showTab('add-menu')">⬅ Retour</button>
+  <div class="panel">
+    <div class="panel-title">🚛 Transporteurs <span class="badge-count" id="carrierCount">0</span></div>
+    <div class="row">
+      <div class="field"><label>Nom *</label><input id="tNom" placeholder="Ex: SANA"></div>
+      <div class="field"><label>Rue</label><input id="tRue" placeholder="Ex: Rue St Exupery 17"></div>
+      <div class="field"><label>CP/Ville</label><input id="tCp" placeholder="Ex: B-4460 Bierset"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Licence</label><input id="tLicence" placeholder="Ex: R544991"></div>
+      <div class="field"><label>R.A.</label><input id="tRa" placeholder="N° R.A."></div>
+    </div>
+    <button class="btn btn-success" onclick="addCarrier()">➕ Ajouter</button>
+    <div class="status" id="statusT"></div>
+    <div class="table-wrap" style="margin-top:10px;">
+      <table><thead><tr><th>Nom</th><th>Rue</th><th>CP/Ville</th><th>Licence</th><th>R.A.</th><th>Actions</th></tr></thead><tbody id="carriersBody"></tbody></table>
+    </div>
+    <div class="empty" id="emptyT" style="display:none;">Aucun transporteur</div>
+  </div>
+</div>
+
+<!-- ====== TAB PLAQUES ====== -->
+<div class="tab" id="tab-add-plate">
+  <button class="btn btn-secondary back-btn" onclick="showTab('vehicle-menu')">⬅ Retour</button>
+  <div class="panel">
+    <div class="panel-title">🔢 Plaques <span class="badge-count" id="plateCount">0</span></div>
+    <div class="row">
+      <div class="field"><label>Type *</label>
+        <select id="plType" onchange="togglePlateCarrierField()">
+          <option value="camion">🚛 Camion</option>
+          <option value="remorque">🚚 Remorque</option>
+        </select>
+      </div>
+      <div class="field" style="flex:2;"><label>N° de plaque *</label><input id="plValue" placeholder="Ex: 2857 BFM"></div>
+    </div>
+    <div class="row" id="plCarrierRow">
+      <div class="field" style="flex:1 1 100%;"><label>Transporteur</label>
+        <select id="plCarrier"><option value="">— Aucun —</option></select>
+      </div>
+    </div>
+    <button class="btn btn-success" onclick="addPlate()">➕ Ajouter</button>
+    <div class="status" id="statusPl"></div>
+    <div class="table-wrap" style="margin-top:10px;">
+      <table><thead><tr><th>Type</th><th>N° de plaque</th><th>Transporteur</th><th>Actions</th></tr></thead><tbody id="platesBody"></tbody></table>
+    </div>
+    <div class="empty" id="emptyPl" style="display:none;">Aucune plaque</div>
+  </div>
+</div>
+
+<!-- ====== TAB VEHICULES ====== -->
+<div class="tab" id="tab-vehicles">
+  <button class="btn btn-secondary back-btn" onclick="showTab('vehicle-menu')">⬅ Retour</button>
+  <div class="panel">
+    <div class="panel-title">🚛 Mes véhicules <span class="badge-count" id="vehicleCount">0</span></div>
+    <div id="vehiclesList"></div>
+    <div class="empty" id="emptyVehicles" style="display:none;">Aucun véhicule</div>
+  </div>
+</div>
+
+<!-- ====== TAB DETAIL VEHICULE ====== -->
+<div class="tab" id="tab-vehicle-detail">
+  <button class="btn btn-secondary back-btn" onclick="backFromVehicleDetail()">⬅ Retour</button>
+  <div class="panel">
+    <div class="panel-title" id="vehicleDetailTitle">🚛 Véhicule</div>
+    <div id="vdStatusSummary" style="margin:4px 0 14px;"></div>
+    <div class="section-title"><span class="num">📍</span> Localisation</div>
+    <div id="vdLocationBox" style="margin-bottom:14px;"></div>
+    <div class="section-title"><span class="num">📅</span> Validité</div>
+    <div class="row">
+      <div class="field"><label>Contrôle technique</label><input type="date" id="vdExpTechnique" onchange="saveVehicleDates()"></div>
+      <div class="field"><label>Assurance</label><input type="date" id="vdExpAssurance" onchange="saveVehicleDates()"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Licence</label><input type="date" id="vdExpLicence" onchange="saveVehicleDates()"></div>
+      <div class="field"><label>Extincteur</label><input type="date" id="vdExpExtincteur" onchange="saveVehicleDates()"></div>
+    </div>
+    <div class="section-title"><span class="num">📎</span> Documents</div>
+    <div id="vdDocsList"></div>
+    <div class="section-title"><span class="num">⚠️</span> Dégâts</div>
+    <button class="btn btn-secondary" onclick="triggerDamagePhoto()" style="margin-bottom:12px;">📷 Signaler</button>
+    <div id="vdDamagesList"></div>
+    <div class="empty" id="emptyDamages" style="display:none;">Aucun dégât</div>
+    <div class="status" id="statusVehicleDetail"></div>
+  </div>
+</div>
+
+<!-- ====== TAB FORM CMR ====== -->
+<div class="tab" id="tab-form">
+  <button class="btn btn-secondary back-btn" onclick="showTab('cmr-menu')">⬅ Retour</button>
+  <div class="panel">
+    <div class="panel-title">📄 Nouveau CMR</div>
+    <div class="wizard-progress-wrap">
+      <div class="wizard-progress-label" id="wizardLabel">Étape 1 / 10</div>
+      <div class="wizard-progress-bar"><div class="wizard-progress-fill" id="wizardFill" style="width:10%;"></div></div>
+    </div>
+    <div class="wizard-step" data-step="1">
+      <div class="section-title"><span class="num">#</span> Référence</div>
+      <div class="row"><div class="field"><label>N° CMR</label><input id="numCmr" readonly placeholder="Auto-généré"></div></div>
+      <div class="section-title"><span class="num">1</span> Expéditeur</div>
+      <div class="row">
+        <div class="field"><label>Choisir</label><select id="selExp" onchange="fillPartner('exp')"><option value="">— Sélectionner —</option></select></div>
+        <div class="field"><label>Adresse</label><input id="c1adr" readonly></div>
+        <div class="field"><label>État</label><input id="c1etat" readonly></div>
+      </div>
+    </div>
+    <div class="wizard-step" data-step="2">
+      <div class="section-title"><span class="num">2</span> Destinataire</div>
+      <div class="row">
+        <div class="field"><label>Choisir</label><select id="selDest" onchange="fillPartner('dest')"><option value="">— Sélectionner —</option></select></div>
+        <div class="field"><label>Adresse</label><input id="c2adr" readonly></div>
+        <div class="field"><label>État</label><input id="c2etat" readonly></div>
+      </div>
+    </div>
+    <div class="wizard-step" data-step="3">
+      <div class="section-title"><span class="num">3</span> Prise en charge</div>
+      <div class="row">
+        <div class="field"><label>Lieu</label><input id="c3lieu" readonly></div>
+        <div class="field"><label>Date</label><input id="c3date" readonly></div>
+      </div>
+      <div class="section-title"><span class="num">4</span> Livraison</div>
+      <div class="row">
+        <div class="field"><label>Lieu</label><input id="c4lieu" readonly></div>
+        <div class="field"><label>Date</label><input id="c4date" type="date"></div>
+      </div>
+    </div>
+    <div class="wizard-step" data-step="4">
+      <div class="section-title"><span class="num">5</span> Transporteur principal</div>
+      <div class="row">
+        <div class="field"><label>Choisir</label><select id="selT5" onchange="fillCarrier('5')"><option value="">— Sélectionner —</option></select></div>
+        <div class="field"><label>Adresse</label><input id="c5info" readonly></div>
+        <div class="field"><label>Licence</label><input id="c5licence" readonly></div>
+        <div class="field"><label>R.A.</label><input id="c5ra" readonly></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Plaque camion</label><select id="c5plaqueCamion"><option value="">— Sélectionner —</option></select></div>
+        <div class="field"><label>Plaque remorque</label><select id="c5plaqueRemorque"><option value="">— Sélectionner —</option></select></div>
+      </div>
+    </div>
+    <div class="wizard-step" data-step="5">
+      <div class="section-title"><span class="num">6</span> Sous-traitant</div>
+      <div class="row">
+        <div class="field"><label>Choisir</label><select id="selT6" onchange="fillCarrier('6')"><option value="">— Sélectionner —</option></select></div>
+        <div class="field"><label>Adresse</label><input id="c6info" readonly></div>
+        <div class="field"><label>Licence</label><input id="c6licence" readonly></div>
+        <div class="field"><label>R.A.</label><input id="c6ra" readonly></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Plaque camion</label><select id="c6plaqueCamion"><option value="">— Sélectionner —</option></select></div>
+        <div class="field"><label>Plaque remorque</label><select id="c6plaqueRemorque"><option value="">— Sélectionner —</option></select></div>
+      </div>
+      <div class="section-title"><span class="num">7</span> Successif</div>
+      <div class="row">
+        <div class="field"><label>Choisir</label><select id="selT7" onchange="fillCarrier('7')"><option value="">— Sélectionner —</option></select></div>
+        <div class="field"><label>Adresse</label><input id="c7info" readonly></div>
+        <div class="field"><label>Plaque camion</label><select id="c7plaque"><option value="">— Sélectionner —</option></select></div>
+      </div>
+    </div>
+    <div class="wizard-step" data-step="6">
+      <div class="section-title"><span class="num">8</span> Temps d'attente</div>
+      <div class="row">
+        <div class="field"><label>Laden - Arrivée</label><input id="c8ladenAankomst" type="time" readonly style="background:#f6f6f6;"></div>
+        <div class="field"><label>Laden - Départ</label><input id="c8ladenVertrek" type="time"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Lossen - Arrivée</label><input id="c8lossenAankomst" type="time"></div>
+        <div class="field"><label>Lossen - Départ</label><input id="c8lossenVertrek" type="time"></div>
+      </div>
+    </div>
+    <div class="wizard-step" data-step="7">
+      <div class="section-title"><span class="num">9</span> Réserves</div>
+      <div class="row"><div class="field" style="flex:1 1 100%;"><textarea id="c9" placeholder="Réserves..."></textarea></div></div>
+    </div>
+    <div class="wizard-step" data-step="8">
+      <div class="section-title"><span class="num">10</span> Marchandises</div>
+      <div class="row">
+        <div class="field" style="flex:1 1 100%;">
+          <div id="marchandisesContainer">
+            <div class="line-item">
+              <input type="text" class="marchandise-input" placeholder="PMC" style="flex:2;">
+              <input type="text" class="marchandise-input awb-input" placeholder="AWB" inputmode="numeric" maxlength="12" style="flex:2;">
+              <input type="text" class="marchandise-input" placeholder="PCS" style="flex:1; max-width:80px;">
+              <input type="text" class="marchandise-input" placeholder="KG" style="flex:1; max-width:80px;">
+              <button class="btn-remove-line" onclick="removeMarchandiseLine(this)">✕</button>
+            </div>
+          </div>
+          <button class="btn-add-line" onclick="addMarchandiseLine()">➕ Ajouter</button>
+        </div>
+      </div>
+    </div>
+    <div class="wizard-step" data-step="9">
+      <div class="section-title"><span class="num">11</span> Établissement</div>
+      <div class="row">
+        <div class="field"><label>Lieu</label><input id="c11lieu" readonly></div>
+        <div class="field"><label>Date</label><input id="c11date" readonly></div>
+      </div>
+      <div class="section-title"><span class="num">13</span> Instructions</div>
+      <div class="checks">
+        <label><input type="checkbox" id="c13remb"> Contre remboursement</label>
+        <label><input type="checkbox" id="c13palettes"> Reprise palettes vides</label>
+      </div>
+    </div>
+    <div class="wizard-step" data-step="10">
+      <div class="section-title"><span class="num">15</span> Signature</div>
+      <div class="row">
+        <div class="field">
+          <label>Image</label>
+          <input type="file" id="c15signFile" accept="image/*" onchange="loadSignature(event)" style="padding:4px;font-size:0.75rem;">
+        </div>
+        <div class="field" style="flex:2;">
+          <label>Aperçu</label>
+          <div class="signature-preview" id="signPreview"><span class="placeholder">Aucune</span></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Nom du signataire</label><input id="c15signName" placeholder="Ex: Jean DUPONT"></div>
+      </div>
+    </div>
+    <div class="wizard-nav">
+      <button class="btn btn-secondary" id="wizardPrevBtn" onclick="wizardPrev()">◀ Précédent</button>
+      <button class="btn btn-ghost" onclick="clearForm()" style="flex:0 0 auto;">↺ Vider</button>
+      <button class="btn btn-primary" id="wizardNextBtn" onclick="wizardNext()">Suivant ▶</button>
+      <button class="btn btn-primary" id="wizardSaveBtn" onclick="saveAndPrint()" style="display:none;">💾 Enregistrer</button>
+    </div>
+    <div class="status" id="statusForm"></div>
+  </div>
+</div>
+
+<!-- ====== TAB HISTORY ====== -->
+<div class="tab" id="tab-history">
+  <button class="btn btn-secondary back-btn" onclick="showTab('cmr-menu')">⬅ Retour</button>
+  <div class="panel">
+    <div class="panel-title">🗂 Historique <span class="badge-count" id="historyCount">0</span></div>
+    <div class="row" style="margin-bottom:10px;">
+      <div class="field" style="flex:2;"><label>Rechercher</label><input id="searchPmcAwb" placeholder="PMC ou AWB" onkeydown="if(event.key==='Enter') searchByPmcAwb();"></div>
+      <div class="field" style="flex:0 0 auto;"><button class="btn btn-primary" onclick="searchByPmcAwb()">🔍</button></div>
+      <div class="field" style="flex:0 0 auto;"><button class="btn btn-secondary" onclick="resetHistorySearch()">↺</button></div>
+    </div>
+    <div class="status" id="statusSearch"></div>
+    <div class="table-wrap">
+      <table><thead><tr><th>N° CMR</th><th>Expéditeur</th><th>Destinataire</th><th>Date</th><th>Actions</th></tr></thead><tbody id="historyBody"></tbody></table>
+    </div>
+    <div class="empty" id="emptyH" style="display:none;">Aucun CMR</div>
+  </div>
+</div>
+
+<!-- ====== TAB SEND ====== -->
+<div class="tab" id="tab-send">
+  <button class="btn btn-secondary back-btn" onclick="showTab('cmr-menu')">⬅ Retour</button>
+  <div class="panel">
+    <div class="panel-title">📤 Envoyer <span class="badge-count" id="sendCount">0</span></div>
+    <div class="status" id="statusSend"></div>
+    <div class="table-wrap">
+      <table><thead><tr><th>N° CMR</th><th>Expéditeur</th><th>Preuve</th><th>Action</th></tr></thead><tbody id="sendBody"></tbody></table>
+    </div>
+    <div class="empty" id="emptySend" style="display:none;">Aucun CMR</div>
+  </div>
+</div>
+
+<!-- ====== MODALS ====== -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal"><h2 id="editModalTitle">✏️ Modifier</h2><div id="editModalContent"></div><div class="btn-group"><button class="btn btn-primary" onclick="saveEdit()">💾 Enregistrer</button><button class="btn btn-secondary" onclick="closeEditModal()">❌ Annuler</button></div><div class="status" id="statusEdit"></div></div>
+</div>
+
+<div class="modal-overlay" id="viewModal">
+  <div class="modal"><h2>📄 Détail</h2><div id="viewModalContent"></div><div class="btn-group"><button class="btn btn-primary" onclick="reprintCmr()">🖨️ Réimprimer</button><button class="btn btn-secondary" onclick="closeViewModal()">❌ Fermer</button></div><div class="status" id="statusView"></div></div>
+</div>
+
+<div class="modal-overlay" id="damageModal">
+  <div class="modal">
+    <h2>⚠️ Nouveau dégât</h2>
+    <div class="field"><label>Véhicule *</label><select id="damageVehicleSelect"></select></div>
+    <div class="field"><label>Description *</label><textarea id="damageDescInput" placeholder="Ex : rétroviseur droit cassé"></textarea></div>
+    <div class="field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="damageUnusableInput" style="width:20px;height:20px;"> 🚫 Inutilisable</label></div>
+    <div class="btn-group"><button class="btn btn-primary" onclick="confirmNewDamage()">✅ Enregistrer</button><button class="btn btn-secondary" onclick="closeDamageModal()">❌ Annuler</button></div>
+    <div class="status" id="statusDamageModal"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="imageModal">
+  <div class="modal"><img id="imageModalImg" style="width:100%;border-radius:12px;display:block;"><div class="btn-group"><button class="btn btn-secondary" style="width:100%;" onclick="closeImageModal()">❌ Fermer</button></div></div>
+</div>
+
+<!-- ====== INPUTS CACHES ====== -->
+<input type="file" id="cameraDashboardInput" accept="image/*" capture="environment" style="display:none">
+<input type="file" id="cameraInteriorInput" accept="image/*" capture="environment" style="display:none">
+<input type="file" id="cameraReturnDashboardInput" accept="image/*" capture="environment" style="display:none">
+<input type="file" id="cameraReturnInteriorInput" accept="image/*" capture="environment" style="display:none">
+<input type="file" id="docFileInput" accept="image/*" capture="environment" style="display:none">
+<input type="file" id="damageFileInput" accept="image/*" capture="environment" style="display:none">
+<input type="file" id="proofFileInput" accept="image/*" capture="environment" style="display:none">
+<div id="printArea"></div>
+
+<script>
+window.addEventListener('error', function(e){
+  try {
+    var d = document.getElementById('diagErr');
+    if(!d){ d = document.createElement('div'); d.id='diagErr';
+      d.setAttribute('style','position:fixed;top:0;left:0;right:0;z-index:99999;background:#b30000;color:#fff;font-size:12px;padding:6px;'); }
+    d.textContent = 'ERREUR: ' + (e.message || 'inconnue');
+    document.body.appendChild(d);
+  } catch(x){}
+});
+// ======== STOCKAGE ========
+const DB_KEY = 'cmr_app_data_v1';
+let _signatureData = null;
+let _takePhotos = {dashboard: null, interior: null};
+let _returnPhotos = {dashboard: null, interior: null};
+let _returnKey = null;
+let _returnThenTakeNew = false;
+let _takePhotoProcessing = false;
+let _returnPhotoProcessing = false;
+let _currentVehicleKey = null;
+let _editKey = null, _editType = null;
+let _viewKey = null, _viewData = null;
+let _proofKey = null;
+let _damageUploadContext = null;
+let _pendingDamagePhoto = null;
+let _docUploadContext = null;
+
+function resetAllDataPrompt(){
+  if(!confirm('⚠️ Ça va supprimer TOUTES les données de l\'application sur cet appareil (chauffeurs, camions, CMR, historique...). Continuer ?')) return;
+  if(!confirm('Dernière confirmation : vraiment tout effacer sur cet appareil ?')) return;
+  localStorage.removeItem(DB_KEY);
+  localStorage.removeItem('cmr_session');
+  location.reload();
+} 
+
+function _loadDb(){ try { const raw = localStorage.getItem(DB_KEY); return raw ? JSON.parse(raw) : {}; } catch(e){ return {}; } }
+function _saveDb(db){ localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+
+// ======== FIREBASE (partage des données entre tous les téléphones) ========
+const firebaseConfig = {
+  apiKey: "AIzaSyC0DvTenrBUqB-KUjej3vTeL0juhNopif0",
+  authDomain: "cmr-app-e27c0.firebaseapp.com",
+  projectId: "cmr-app-e27c0",
+  storageBucket: "cmr-app-e27c0.firebasestorage.app",
+  messagingSenderId: "538447596844",
+  appId: "1:538447596844:web:0e05aa94cfee015eb13089",
+  measurementId: "G-ERR9RVED9V"
+};
+
+let _fsEnabled = false;
+let _fsDb = null;
+let _fsStorage = null;
+const FS_COLLECTION = 'cmr_data';
+const FS_SIZE_LIMIT = 700000; // seuil de sécurité (limite Firestore ~1 Mo par document)
+
+function _fsDocId(key){ return key.replace(/\//g, '__SLASH__'); }
+
+function updateSyncIndicator(status){
+  const el = document.getElementById('syncIndicator');
+  if(!el) return;
+  if(status === 'online'){ el.textContent = '🟢 En ligne'; el.style.color = '#1a7a62'; }
+  else if(status === 'syncing'){ el.textContent = '🔄 Synchronisation...'; el.style.color = '#b8860b'; }
+  else { el.textContent = '🔴 Hors ligne (local)'; el.style.color = '#c0392b'; }
+}
+
+async function _migrateLocalDataToCloudIfNeeded(){
+  try {
+    const already = localStorage.getItem('cmr_migrated_v1');
+    if(already) return;
+    const snap = await _fsDb.collection(FS_COLLECTION).limit(1).get();
+    if(snap.empty){
+      const db = _loadDb();
+      const keys = Object.keys(db);
+      if(keys.length){
+        updateSyncIndicator('syncing');
+        for(const key of keys){ await storage.set(key, db[key]); }
+      }
+    }
+    localStorage.setItem('cmr_migrated_v1', '1');
+  } catch(e){ console.error('Erreur migration initiale', e); }
+}
+
+function initFirebaseSync(){
+  try {
+    firebase.initializeApp(firebaseConfig);
+    _fsDb = firebase.firestore();
+    _fsStorage = firebase.storage();
+    _fsEnabled = true;
+    updateSyncIndicator('online');
+    _migrateLocalDataToCloudIfNeeded();
+    // Écoute en temps réel : dès qu'un autre téléphone modifie une donnée, on la reçoit ici
+    _fsDb.collection(FS_COLLECTION).onSnapshot(async (snapshot) => {
+      updateSyncIndicator('syncing');
+      const db = _loadDb();
+      for(const change of snapshot.docChanges()){
+        const docId = change.doc.id;
+        const key = docId.replace(/__SLASH__/g, '/');
+        if(change.type === 'removed'){
+          delete db[key];
+        } else {
+          const data = change.doc.data();
+          if(data.storageRef){
+            try {
+              const url = await _fsStorage.ref(data.storageRef).getDownloadURL();
+              const resp = await fetch(url);
+              db[key] = await resp.text();
+            } catch(e){ console.error('Erreur récupération fichier volumineux', key, e); }
+          } else {
+            db[key] = data.value;
+          }
+        }
+      }
+      _saveDb(db);
+      updateSyncIndicator('online');
+      // Rafraîchit l'écran actuellement affiché pour montrer les changements en direct
+      if(window._currentTab && typeof showTab === 'function'){ showTab(window._currentTab); }
+    }, (err) => { console.error('Erreur de synchronisation Firebase', err); updateSyncIndicator('offline'); });
+  } catch(e){
+    console.error('Firebase indisponible, passage en mode local uniquement', e);
+    _fsEnabled = false;
+    updateSyncIndicator('offline');
+  }
+}
+
+const storage = {
+  async set(key, value){
+    const db = _loadDb(); db[key] = value; _saveDb(db);
+    if(_fsEnabled){
+      try {
+        const docId = _fsDocId(key);
+        if(value && value.length > FS_SIZE_LIMIT){
+          const path = FS_COLLECTION + '/' + docId + '.json';
+          await _fsStorage.ref(path).putString(value, 'raw', {contentType:'application/json'});
+          await _fsDb.collection(FS_COLLECTION).doc(docId).set({ storageRef: path, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+        } else {
+          await _fsDb.collection(FS_COLLECTION).doc(docId).set({ value, storageRef: null, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+        }
+      } catch(e){ console.error('Erreur envoi Firebase (donnée gardée en local)', key, e); updateSyncIndicator('offline'); }
+    }
+    return { key, value };
+  },
+  async get(key){ const db = _loadDb(); if(!(key in db)) return null; return { key, value: db[key] }; },
+  async delete(key){
+    const db = _loadDb(); delete db[key]; _saveDb(db);
+    if(_fsEnabled){
+      try {
+        const docId = _fsDocId(key);
+        const snap = await _fsDb.collection(FS_COLLECTION).doc(docId).get();
+        if(snap.exists && snap.data().storageRef){ await _fsStorage.ref(snap.data().storageRef).delete().catch(()=>{}); }
+        await _fsDb.collection(FS_COLLECTION).doc(docId).delete();
+      } catch(e){ console.error('Erreur suppression Firebase', key, e); updateSyncIndicator('offline'); }
+    }
+    return { key, deleted:true };
+  },
+  async list(prefix){ const db = _loadDb(); const keys = Object.keys(db).filter(k => !prefix || k.startsWith(prefix)); return { keys }; },
+  async clear(prefix){
+    const db = _loadDb(); const keys = Object.keys(db).filter(k => !prefix || k.startsWith(prefix));
+    for(const key of keys){ delete db[key]; if(_fsEnabled){ try { await _fsDb.collection(FS_COLLECTION).doc(_fsDocId(key)).delete(); } catch(e){} } }
+    _saveDb(db); return { deleted: keys.length };
+  }
+};
+
+// ======== UTILITAIRES ========
+function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function setStatus(id, msg, type){ const el = document.getElementById(id); if(!el) return; el.textContent = msg; el.className = 'status' + (type ? ' ' + type : ''); if(type) el.style.display = 'block'; else el.style.display = ''; }
+function fmt(...parts){ return parts.filter(Boolean).join('\n'); }
+function uint8ToBase64(bytes){ let binary = ''; const chunkSize = 0x8000; for(let i=0;i<bytes.length;i+=chunkSize){ binary += String.fromCharCode.apply(null, bytes.subarray(i, i+chunkSize)); } return btoa(binary); }
+
+function showTab(name){
+  window._currentTab = name;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const el = document.getElementById('tab-'+name);
+  if(el) el.classList.add('active');
+  if(name==='add-client' || name==='add-carrier') loadContacts();
+  if(name==='add-plate') loadPlates();
+  if(name==='history') loadHistory();
+  if(name==='send') loadSendList();
+  if(name==='form') showWizardStep(1);
+  if(name==='vehicles') loadVehiclesList();
+  if(name==='drivers') loadDrivers();
+  if(name==='fleet') loadFleet();
+  if(name==='parking-admin') loadParkingAdmin();
+  if(name==='parking-driver') loadParkingDriver();
+  if(name==='backup') loadBackupCount();
+  if(name==='arrivals') loadArrivals();
+  if(name==='damages') loadDamagesView();
+  if(name==='admins') loadAdmins();
+  if(name==='driver-home') loadDriverHome();
+  if(name==='take-vehicle') populateTakeSelects();
+  window.scrollTo(0,0);
+}
+
+function backFromVehicleDetail(){
+  if(window._session && window._session.role === 'driver') showTab('driver-home');
+  else showTab('vehicles');
+}
+
+// ======== SESSION ========
+function showLoginView(view){
+  document.getElementById('loginRoleChoice').style.display = view === 'choice' ? 'block' : 'none';
+  document.getElementById('loginAdminView').style.display = view === 'admin' ? 'block' : 'none';
+  document.getElementById('loginDriverView').style.display = view === 'driver' ? 'block' : 'none';
+  if(view === 'admin'){
+    storage.list('admin:').then(list => {
+      const hasAdmins = list && list.keys && list.keys.length > 0;
+      document.getElementById('loginAdminSetup').style.display = hasAdmins ? 'none' : 'block';
+      document.getElementById('loginAdminEnter').style.display = hasAdmins ? 'block' : 'none';
+      setStatus('statusLoginAdmin', '');
+      if(hasAdmins) loadAdminLoginSelect();
+    });
+  }
+  if(view === 'driver'){ setStatus('statusLoginDriver', ''); loadDriverLoginSelect(); }
+}
+
+async function loadAdminLoginSelect(){
+  const list = await storage.list('admin:');
+  const sel = document.getElementById('loginAdminSelect');
+  sel.innerHTML = '<option value="">— Sélectionner —</option>';
+  if(list && list.keys){ for(const key of list.keys){ const res = await storage.get(key); const d = JSON.parse(res.value); sel.innerHTML += `<option value="${key}">${escapeHtml(d.nom)}</option>`; } }
+}
+
+async function loadDriverLoginSelect(){
+  const list = await storage.list('driver:');
+  const sel = document.getElementById('loginDriverSelect');
+  sel.innerHTML = '<option value="">— Sélectionner —</option>';
+  if(list && list.keys){ for(const key of list.keys){ const res = await storage.get(key); const d = JSON.parse(res.value); sel.innerHTML += `<option value="${key}">${escapeHtml(d.nom)}</option>`; } }
+}
+
+async function createAdminPin(){
+  const nom = document.getElementById('adminSetupNom').value.trim();
+  const p1 = document.getElementById('adminPinNew').value.trim();
+  const p2 = document.getElementById('adminPinConfirm').value.trim();
+  if(!nom){ setStatus('statusLoginAdmin', '❌ Nom obligatoire.', 'error'); return; }
+  if(!/^\d{4}$/.test(p1)){ setStatus('statusLoginAdmin', '❌ 4 chiffres requis.', 'error'); return; }
+  if(p1 !== p2){ setStatus('statusLoginAdmin', '❌ Les codes ne correspondent pas.', 'error'); return; }
+  const key = 'admin:' + Date.now();
+  await storage.set(key, JSON.stringify({nom, pin: p1}));
+  loginSuccess({role: 'admin', name: nom, key});
+}
+
+async function loginAsAdmin(){
+  const key = document.getElementById('loginAdminSelect').value;
+  const pin = document.getElementById('adminPinInput').value.trim();
+  if(!key){ setStatus('statusLoginAdmin', '❌ Sélectionne ton nom.', 'error'); return; }
+  const res = await storage.get(key);
+  const d = res ? JSON.parse(res.value) : null;
+  if(!d || d.pin !== pin){ setStatus('statusLoginAdmin', '❌ Code incorrect.', 'error'); return; }
+  loginSuccess({role: 'admin', name: d.nom, key});
+}
+
+// ======== GESTION ADMINISTRATEURS ========
+async function addAdmin(){
+  const nom = document.getElementById('adminNom').value.trim();
+  const pin = document.getElementById('adminNewPin').value.trim();
+  if(!nom){ setStatus('statusAdmins', '❌ Nom obligatoire.', 'error'); return; }
+  if(!/^\d{4}$/.test(pin)){ setStatus('statusAdmins', '❌ Code 4 chiffres.', 'error'); return; }
+  await storage.set('admin:' + Date.now(), JSON.stringify({nom, pin}));
+  document.getElementById('adminNom').value = ''; document.getElementById('adminNewPin').value = '';
+  setStatus('statusAdmins', '✅ Administrateur ajouté.', 'success');
+  loadAdmins();
+}
+
+async function delAdmin(key){
+  const list = await storage.list('admin:');
+  if(list && list.keys && list.keys.length <= 1){ setStatus('statusAdmins', '❌ Impossible de supprimer le dernier administrateur.', 'error'); return; }
+  if(window._session && window._session.key === key){ setStatus('statusAdmins', '❌ Tu ne peux pas supprimer ton propre compte pendant que tu es connecté.', 'error'); return; }
+  if(!confirm('Supprimer cet administrateur ?')) return;
+  await storage.delete(key);
+  loadAdmins();
+}
+
+async function loadAdmins(){
+  const list = await storage.list('admin:');
+  document.getElementById('adminCount').textContent = list && list.keys ? list.keys.length : 0;
+  document.getElementById('emptyAdmins').style.display = (!list||!list.keys||!list.keys.length) ? 'block' : 'none';
+  const body = document.getElementById('adminsBody');
+  body.innerHTML = '';
+  if(list && list.keys){
+    for(const key of list.keys){
+      const res = await storage.get(key);
+      if(!res) continue;
+      const d = JSON.parse(res.value);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td><strong>${escapeHtml(d.nom)}</strong>${window._session && window._session.key === key ? ' <span style="color:#888;font-size:0.75rem;">(toi)</span>' : ''}</td><td><button class="btn btn-sm btn-secondary" onclick="openEditModal('${key}','admin')">✏️</button> <button class="btn btn-sm btn-danger" onclick="delAdmin('${key}')">✕</button></td>`;
+      body.appendChild(tr);
+    }
+  }
+}
+
+async function loginAsDriver(){
+  const key = document.getElementById('loginDriverSelect').value;
+  const pin = document.getElementById('driverPinInput').value.trim();
+  if(!key){ setStatus('statusLoginDriver', '❌ Sélectionne ton nom.', 'error'); return; }
+  const res = await storage.get(key);
+  const d = res ? JSON.parse(res.value) : null;
+  if(!d || d.pin !== pin){ setStatus('statusLoginDriver', '❌ Code incorrect.', 'error'); return; }
+  loginSuccess({role: 'driver', name: d.nom, key});
+}
+
+function loginSuccess(session){
+  localStorage.setItem('cmr_session', JSON.stringify(session));
+  window._session = session;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  if(session.role === 'admin'){ document.getElementById('tab-home').classList.add('active'); }
+  else { document.getElementById('tab-driver-home').classList.add('active'); loadDriverHome(); }
+}
+
+function logout(){ localStorage.removeItem('cmr_session'); location.reload(); }
+
+// ======== GESTION CHAUFFEURS ========
+async function addDriver(){
+  const nom = document.getElementById('driverNom').value.trim();
+  const pin = document.getElementById('driverPin').value.trim();
+  if(!nom){ setStatus('statusDrivers', '❌ Nom obligatoire.', 'error'); return; }
+  if(!/^\d{4}$/.test(pin)){ setStatus('statusDrivers', '❌ Code 4 chiffres.', 'error'); return; }
+  await storage.set('driver:' + Date.now(), JSON.stringify({nom, pin, assignedCamionKey:'', assignedRemorqueKey:''}));
+  document.getElementById('driverNom').value = ''; document.getElementById('driverPin').value = '';
+  setStatus('statusDrivers', '✅ Chauffeur ajouté.', 'success');
+  loadDrivers();
+}
+
+async function removeDriverVehicle(driverKey){
+  if(!confirm('Retirer tous les véhicules attribués à ce chauffeur ?')) return;
+  
+  const res = await storage.get(driverKey);
+  if(!res) return;
+  const d = JSON.parse(res.value);
+  
+  const takesList = await storage.list('vehicletake:');
+  let active = null;
+  if(takesList && takesList.keys){
+    for(const key of takesList.keys){
+      const r = await storage.get(key);
+      if(r){
+        const t = JSON.parse(r.value);
+        if(t.chauffeurKey === driverKey && !t.dateEnd){
+          active = {key, ...t};
+          break;
+        }
+      }
+    }
+  }
+  
+  if(active){
+    if(!confirm(`⚠️ ${d.nom} est en train d'utiliser le camion ${active.camionValue}. Voulez-vous forcer le retrait ?`)){
+      return;
+    }
+    const now = new Date().toISOString();
+    active.dateEnd = now;
+    await storage.set(active.key, JSON.stringify(active));
+    if(active.remorqueKey){
+      await storage.set('trailerstate:' + active.remorqueKey, JSON.stringify({
+        attached: false,
+        parkingKey: '',
+        parkingNom: '',
+        since: now
+      }));
+    }
+  }
+  
+  d.assignedCamionKey = '';
+  d.assignedRemorqueKey = '';
+  await storage.set(driverKey, JSON.stringify(d));
+  setStatus('statusAssignment', `✅ Véhicules retirés de ${d.nom}.`, 'success');
+  loadDrivers();
+}
+
+async function assignDriverVehicle(driverKey){
+  const camionKey = document.getElementById('assignCamion_' + driverKey).value;
+  const remorqueKey = document.getElementById('assignRemorque_' + driverKey).value;
+  const res = await storage.get(driverKey);
+  if(!res) return;
+  const d = JSON.parse(res.value);
+  
+  if(!camionKey){
+    const takesList = await storage.list('vehicletake:');
+    let active = null;
+    if(takesList && takesList.keys){
+      for(const key of takesList.keys){
+        const r = await storage.get(key);
+        if(r){
+          const t = JSON.parse(r.value);
+          if(t.chauffeurKey === driverKey && !t.dateEnd){
+            active = {key, ...t};
+            break;
+          }
+        }
+      }
+    }
+    
+    if(active){
+      if(!confirm(`⚠️ ${d.nom} est en train d'utiliser le camion ${active.camionValue}. Forcer le retrait ?`)){
+        return;
+      }
+      const now = new Date().toISOString();
+      active.dateEnd = now;
+      await storage.set(active.key, JSON.stringify(active));
+      if(active.remorqueKey){
+        await storage.set('trailerstate:' + active.remorqueKey, JSON.stringify({
+          attached: false,
+          parkingKey: '',
+          parkingNom: '',
+          since: now
+        }));
+      }
+    }
+    
+    d.assignedCamionKey = '';
+    d.assignedRemorqueKey = '';
+    await storage.set(driverKey, JSON.stringify(d));
+    setStatus('statusAssignment', `✅ Attribution retirée pour ${d.nom}.`, 'success');
+    loadDrivers();
+    return;
+  }
+  
+  const drivers = await storage.list('driver:');
+  if(drivers && drivers.keys){
+    for(const k of drivers.keys){
+      if(k === driverKey) continue;
+      const r = await storage.get(k);
+      if(!r) continue;
+      const other = JSON.parse(r.value);
+      if(other.assignedCamionKey === camionKey){
+        setStatus('statusAssignment', `❌ Ce camion est déjà attribué à ${other.nom}.`, 'error');
+        return;
+      }
+      if(remorqueKey && other.assignedRemorqueKey === remorqueKey){
+        setStatus('statusAssignment', `❌ Cette remorque est déjà attribuée à ${other.nom}.`, 'error');
+        return;
+      }
+    }
+  }
+  
+  // Sécurité supplémentaire : un véhicule actuellement utilisé ne peut pas être
+  // attribué à un autre chauffeur, même si son attribution a été modifiée.
+  const takesList = await storage.list('vehicletake:');
+  if(takesList && takesList.keys){
+    for(const k of takesList.keys){
+      const r = await storage.get(k);
+      if(!r) continue;
+      let active; try { active = JSON.parse(r.value); } catch(e) { continue; }
+      if(active.dateEnd) continue;
+      if(active.camionKey === camionKey && active.chauffeurKey !== driverKey){
+        setStatus('statusAssignment', `❌ Ce camion est actuellement utilisé par ${active.chauffeurNom || 'un autre chauffeur'}.`, 'error');
+        return;
+      }
+      if(remorqueKey && active.remorqueKey === remorqueKey && active.chauffeurKey !== driverKey){
+        setStatus('statusAssignment', `❌ Cette remorque est actuellement utilisée par ${active.chauffeurNom || 'un autre chauffeur'}.`, 'error');
+        return;
+      }
+    }
+  }
+
+  d.assignedCamionKey = camionKey;
+  d.assignedRemorqueKey = remorqueKey || '';
+  await storage.set(driverKey, JSON.stringify(d));
+  setStatus('statusAssignment', `✅ ${d.nom} : ${camionKey}${remorqueKey ? ' + ' + remorqueKey : ''} attribué.`, 'success');
+  loadDrivers();
+}
+
+async function delDriver(key){ if(confirm('Supprimer ?')){ await storage.delete(key); loadDrivers(); } }
+
+async function loadDrivers(){
+  const list = await storage.list('driver:');
+  document.getElementById('driverCount').textContent = list && list.keys ? list.keys.length : 0;
+  document.getElementById('emptyDrivers').style.display = (!list||!list.keys||!list.keys.length) ? 'block' : 'none';
+
+  const platesList = await storage.list('plate:');
+  const plates = [];
+  if(platesList && platesList.keys){ for(const key of platesList.keys){ const r = await storage.get(key); if(r) plates.push({key, ...JSON.parse(r.value)}); } }
+  const camions = plates.filter(p => p.type === 'camion');
+  const remorques = plates.filter(p => p.type === 'remorque');
+
+  const assignedCamions = new Set();
+  const assignedRemorques = new Set();
+  if(list && list.keys){
+    for(const otherKey of list.keys){
+      const r = await storage.get(otherKey);
+      if(!r) continue;
+      const other = JSON.parse(r.value);
+      if(other.assignedCamionKey) assignedCamions.add(other.assignedCamionKey);
+      if(other.assignedRemorqueKey) assignedRemorques.add(other.assignedRemorqueKey);
+    }
+  }
+
+  const body = document.getElementById('driversBody');
+  body.innerHTML = '';
+  if(list && list.keys){
+    for(const key of list.keys){
+      const res = await storage.get(key);
+      const d = JSON.parse(res.value);
+      const tr = document.createElement('tr');
+      const assignedCamion = camions.find(p => p.key === d.assignedCamionKey);
+      const assignedRemorque = remorques.find(p => p.key === d.assignedRemorqueKey);
+      const availableCamions = camions.filter(p => p.key === d.assignedCamionKey || !assignedCamions.has(p.key));
+      const availableRemorques = remorques.filter(p => p.key === d.assignedRemorqueKey || !assignedRemorques.has(p.key));
+      
+      const camionOptions = '<option value="">— Aucun —</option>' + availableCamions.map(p => `<option value="${escapeHtml(p.key)}" ${p.key===d.assignedCamionKey?'selected':''}>${escapeHtml(p.value)}</option>`).join('');
+      const remorqueOptions = '<option value="">— Aucune —</option>' + availableRemorques.map(p => `<option value="${escapeHtml(p.key)}" ${p.key===d.assignedRemorqueKey?'selected':''}>${escapeHtml(p.value)}</option>`).join('');
+      
+      tr.innerHTML = `
+        <td><strong>${escapeHtml(d.nom)}</strong></td>
+        <td style="min-width:260px;">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+            <select id="assignCamion_${key}" style="min-width:120px;">${camionOptions}</select>
+            <select id="assignRemorque_${key}" style="min-width:120px;">${remorqueOptions}</select>
+            <button class="btn btn-sm btn-primary" onclick="assignDriverVehicle('${key}')">💾</button>
+            ${d.assignedCamionKey ? `<button class="btn btn-sm btn-danger" onclick="removeDriverVehicle('${key}')">✕ Retirer</button>` : ''}
+          </div>
+          <div style="font-size:0.72rem;color:#666;margin-top:5px;">
+            ${assignedCamion ? '🚛 ' + escapeHtml(assignedCamion.value) : 'Aucun camion'}${assignedRemorque ? ' + 🚚 ' + escapeHtml(assignedRemorque.value) : ''}
+          </div>
+        </td>
+        <td><button class="btn btn-sm btn-secondary" onclick="openEditModal('${key}','driver')">✏️</button> <button class="btn btn-sm btn-danger" onclick="delDriver('${key}')">✕</button></td>
+      `;
+      body.appendChild(tr);
+    }
+  }
+}
+
+// ======== CHAUFFEUR ACCUEIL ========
+async function loadDriverHome(){
+  document.getElementById('driverHomeName').textContent = window._session.name;
+  await populateSelects();
+  await loadDriverArrivalBox();
+
+  let driverData = null;
+  const driverRes = await storage.get(window._session.key);
+  if(driverRes){ try { driverData = JSON.parse(driverRes.value); } catch(e) { driverData = null; } }
+
+  const list = await storage.list('vehicletake:');
+  let active = null;
+  if(list && list.keys){
+    for(const key of list.keys){
+      const res = await storage.get(key);
+      if(!res) continue;
+      let d; try { d = JSON.parse(res.value); } catch(e) { continue; }
+      if(d.chauffeurKey === window._session.key && !d.dateEnd){ active = {key, ...d}; break; }
+    }
+  }
+
+  const assignedCamion = driverData && driverData.assignedCamionKey ? (window._plates || []).find(p => p.key === driverData.assignedCamionKey) : null;
+  const assignedRemorque = driverData && driverData.assignedRemorqueKey ? (window._plates || []).find(p => p.key === driverData.assignedRemorqueKey) : null;
+  const container = document.getElementById('driverCurrentVehicle');
+
+  if(active){
+    container.innerHTML = `
+      <div class="vehicle-card">
+        <div class="vehicle-card-head">
+          <span class="vehicle-plate">🚛 ${escapeHtml(active.camionValue)}</span>
+          <span class="vehicle-type-label camion-label">🟢 En cours</span>
+        </div>
+        <div style="font-size:0.8rem;color:#666;margin-bottom:10px;">
+          ${active.remorqueValue ? '🚚 + remorque ' + escapeHtml(active.remorqueValue) + '<br>' : ''}
+          Pris le ${new Date(active.dateStart).toLocaleString('fr-FR')}
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-secondary" onclick="openVehicleDetail('${active.camionKey}')">👁️ Camion</button>
+          ${active.remorqueKey ? `<button class="btn btn-secondary" onclick="openVehicleDetail('${active.remorqueKey}')">🚚 Remorque</button>` : ''}
+          ${active.remorqueKey ? `<button class="btn btn-secondary" onclick="showTab('parking-driver')">🚚 Remorque</button>` : `<button class="btn btn-secondary" onclick="showTab('parking-driver')">🅿️ Camion</button>`}
+          <button class="btn btn-secondary" onclick="startChangeCamion('${active.key}')">🔁 Changer camion</button>
+          <button class="btn btn-danger" onclick="startReturnVehicle('${active.key}')">↩️ Rendre</button>
+          <button class="btn btn-warning" onclick="returnAndFree('${active.key}')">🆓 Rendre et libérer</button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  if(assignedCamion){
+    container.innerHTML = `
+      <div class="vehicle-card" style="border:2px solid #1a5276;">
+        <div class="vehicle-card-head">
+          <span class="vehicle-plate">📌 🚛 ${escapeHtml(assignedCamion.value)}</span>
+          <span class="vehicle-type-label camion-label">Attribué</span>
+        </div>
+        <div style="font-size:0.82rem;color:#555;margin-bottom:10px;">
+          ${assignedRemorque ? '🚚 Remorque : ' + escapeHtml(assignedRemorque.value) : ''}
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-secondary" onclick="openVehicleDetail('${assignedCamion.key}')">👁️</button>
+          <button class="btn btn-primary" onclick="showTab('take-vehicle')">🚛 Prendre</button>
+          <button class="btn btn-secondary" onclick="showTab('parking-driver')">🅿️</button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <p style="font-size:0.85rem;color:#666;margin:8px 0 14px;">Aucun véhicule attribué.</p>
+    <button class="btn btn-primary" style="width:100%;" onclick="showTab('take-vehicle')">🚛 Prendre</button>
+    <button class="btn btn-secondary" style="width:100%;margin-top:8px;" onclick="showTab('parking-driver')">🅿️ Remorque</button>
+  `;
+}
+
+async function returnAndFree(takeKey){
+  const res = await storage.get(takeKey);
+  if(!res){ setStatus('statusDriverHome', '❌ Erreur.', 'error'); return; }
+  const d = JSON.parse(res.value);
+  if(d.remorqueKey){ setStatus('statusDriverHome', '❌ Une remorque est accrochée. Décroche-la d\'abord (📍 emplacement) ou utilise "↩️ Rendre".', 'error'); return; }
+  if(!confirm('Rendre le véhicule et libérer l\'attribution ?')) return;
+  
+  d.dateEnd = new Date().toISOString();
+  await storage.set(takeKey, JSON.stringify(d));
+  
+  if(d.remorqueKey){
+    await storage.set('trailerstate:' + d.remorqueKey, JSON.stringify({
+      attached: false,
+      parkingKey: '',
+      parkingNom: '',
+      since: new Date().toISOString()
+    }));
+  }
+  
+  const driverRes = await storage.get(window._session.key);
+  if(driverRes){
+    const driverData = JSON.parse(driverRes.value);
+    driverData.assignedCamionKey = '';
+    driverData.assignedRemorqueKey = '';
+    await storage.set(window._session.key, JSON.stringify(driverData));
+  }
+  
+  setStatus('statusDriverHome', '✅ Véhicule rendu et attribution libérée.', 'success');
+  loadDriverHome();
+}
+
+// ======== GESTION CONTACTS ========
+async function addPartner(){
+  const nom = document.getElementById('pNom').value.trim();
+  const adr = document.getElementById('pAdr').value.trim();
+  const etat = document.getElementById('pEtat').value.trim();
+  if(!nom){ setStatus('statusP', '❌ Nom obligatoire.', 'error'); return; }
+  await storage.set('partner:' + Date.now(), JSON.stringify({nom, adr, etat}));
+  document.getElementById('pNom').value=''; document.getElementById('pAdr').value=''; document.getElementById('pEtat').value='';
+  setStatus('statusP', '✅ Ajouté !', 'success');
+  loadContacts();
+}
+
+async function addCarrier(){
+  const nom = document.getElementById('tNom').value.trim();
+  const rue = document.getElementById('tRue').value.trim();
+  const cp = document.getElementById('tCp').value.trim();
+  const licence = document.getElementById('tLicence').value.trim();
+  const ra = document.getElementById('tRa').value.trim();
+  if(!nom){ setStatus('statusT', '❌ Nom obligatoire.', 'error'); return; }
+  let adrComplete = rue; if(cp) adrComplete += (adrComplete ? ' - ' : '') + cp;
+  await storage.set('carrier:' + Date.now(), JSON.stringify({nom, adr: adrComplete, licence, ra}));
+  document.getElementById('tNom').value=''; document.getElementById('tRue').value=''; document.getElementById('tCp').value=''; document.getElementById('tLicence').value=''; document.getElementById('tRa').value='';
+  setStatus('statusT', '✅ Ajouté !', 'success');
+  loadContacts();
+}
+
+async function delContact(key){ if(confirm('Supprimer ?')){ await storage.delete(key); loadContacts(); } }
+
+async function loadContacts(){
+  const pBody = document.getElementById('partnersBody');
+  pBody.innerHTML='';
+  const pList = await storage.list('partner:');
+  document.getElementById('emptyP').style.display = (!pList||!pList.keys||pList.keys.length===0) ? 'block':'none';
+  document.getElementById('partnerCount').textContent = pList && pList.keys ? pList.keys.length : 0;
+  if(pList && pList.keys){
+    for(const key of pList.keys){
+      const res = await storage.get(key);
+      const d = JSON.parse(res.value);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(d.nom)}</td>
+        <td>${escapeHtml(d.adr)}</td>
+        <td>${escapeHtml(d.etat)}</td>
+        <td><button class="btn btn-sm btn-secondary" onclick="openEditModal('${key}','partner')">✏️</button><button class="btn btn-sm btn-danger" onclick="delContact('${key}')">✕</button></td>
+      `;
+      pBody.appendChild(tr);
+    }
+  }
+
+  const tBody = document.getElementById('carriersBody');
+  tBody.innerHTML='';
+  const tList = await storage.list('carrier:');
+  document.getElementById('emptyT').style.display = (!tList||!tList.keys||tList.keys.length===0) ? 'block':'none';
+  document.getElementById('carrierCount').textContent = tList && tList.keys ? tList.keys.length : 0;
+  if(tList && tList.keys){
+    for(const key of tList.keys){
+      const res = await storage.get(key);
+      const d = JSON.parse(res.value);
+      let rue = d.adr || ''; let cp = '';
+      if(rue.includes(' - ')){ const parts = rue.split(' - '); rue = parts[0]; cp = parts.slice(1).join(' - '); }
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(d.nom)}</td>
+        <td>${escapeHtml(rue)}</td>
+        <td>${escapeHtml(cp)}</td>
+        <td>${escapeHtml(d.licence || '')}</td>
+        <td>${escapeHtml(d.ra || '')}</td>
+        <td><button class="btn btn-sm btn-secondary" onclick="openEditModal('${key}','carrier')">✏️</button><button class="btn btn-sm btn-danger" onclick="delContact('${key}')">✕</button></td>
+      `;
+      tBody.appendChild(tr);
+    }
+  }
+  populateSelects();
+}
+
+// ======== GESTION PLAQUES ========
+function togglePlateCarrierField(){
+  const type = document.getElementById('plType').value;
+  document.getElementById('plCarrierRow').style.display = (type === 'camion') ? 'flex' : 'none';
+}
+
+async function addPlate(){
+  const type = document.getElementById('plType').value;
+  const value = document.getElementById('plValue').value.trim();
+  const carrierKey = type === 'camion' ? document.getElementById('plCarrier').value : '';
+  if(!value){ setStatus('statusPl', '❌ N° de plaque obligatoire.', 'error'); return; }
+  await storage.set('plate:' + Date.now(), JSON.stringify({value, type, carrierKey}));
+  document.getElementById('plValue').value = ''; document.getElementById('plCarrier').value = '';
+  setStatus('statusPl', '✅ Ajouté !', 'success');
+  loadPlates();
+}
+
+async function delPlate(key){ if(confirm('Supprimer ?')){ await storage.delete(key); loadPlates(); } }
+
+async function loadPlates(){
+  const body = document.getElementById('platesBody');
+  body.innerHTML = '';
+  togglePlateCarrierField();
+
+  const cList = await storage.list('carrier:');
+  const carriers = [];
+  if(cList && cList.keys){ for(const key of cList.keys){ const res = await storage.get(key); carriers.push({key, ...JSON.parse(res.value)}); } }
+  const carrierSel = document.getElementById('plCarrier');
+  const prevCarrier = carrierSel.value;
+  carrierSel.innerHTML = '<option value="">— Aucun —</option>' + carriers.map(c=>`<option value="${c.key}">${escapeHtml(c.nom)}</option>`).join('');
+  carrierSel.value = prevCarrier;
+
+  const list = await storage.list('plate:');
+  document.getElementById('emptyPl').style.display = (!list||!list.keys||list.keys.length===0) ? 'block':'none';
+  document.getElementById('plateCount').textContent = list && list.keys ? list.keys.length : 0;
+  if(list && list.keys){
+    for(const key of list.keys){
+      const res = await storage.get(key);
+      const d = JSON.parse(res.value);
+      const carrier = d.type === 'camion' ? carriers.find(c => c.key === d.carrierKey) : null;
+      const tr = document.createElement('tr');
+      const isCamion = d.type === 'camion';
+      tr.style.cursor = 'pointer';
+      tr.innerHTML = `
+        <td><span style="font-weight:700;color:${isCamion ? '#1a5276' : '#7d6608'};">${isCamion ? '🚛 Camion' : '🚚 Remorque'}</span></td>
+        <td style="font-weight:600;color:${isCamion ? '#1a5276' : '#7d6608'};">${escapeHtml(d.value)}</td>
+        <td>${d.type === 'remorque' ? '—' : (carrier ? escapeHtml(carrier.nom) : '<span style="color:#999;">—</span>')}</td>
+        <td>
+          <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openEditModal('${key}','plate')">✏️</button>
+          <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();delPlate('${key}')">✕</button>
+        </td>
+      `;
+      tr.addEventListener('click', () => openVehicleDetail(key));
+      body.appendChild(tr);
+    }
+  }
+  populateSelects();
+}
+
+// ======== PHOTOS ========
+function fileToCompressedJpeg(file, maxDim){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = function(e){
+      const img = new Image();
+      img.onload = function(){
+        let w = img.width, h = img.height;
+        const targetDim = maxDim || 400;
+        if(w > targetDim || h > targetDim){
+          const scale = targetDim / Math.max(w, h);
+          w = Math.round(w * scale);
+          h = Math.round(h * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        canvas.toBlob(function(blob){
+          if(!blob){ reject(new Error('Conversion JPEG impossible')); return; }
+          blob.arrayBuffer().then(buf => {
+            resolve({bytes: new Uint8Array(buf), width: w, height: h});
+          }).catch(reject);
+        }, 'image/jpeg', 0.35);
+      };
+      img.onerror = function(){ reject(new Error('Erreur chargement image')); };
+      img.src = e.target.result;
+    };
+    reader.onerror = function(){ reject(new Error('Erreur lecture fichier')); };
+    reader.readAsDataURL(file);
+  });
+}
+
+function stampPhotoWithTimestamp(dataUri){
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = function(){
+      try{
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const now = new Date();
+        const stamp = now.toLocaleDateString('fr-FR') + ' ' + now.toLocaleTimeString('fr-FR');
+        const fontSize = Math.max(14, Math.round(canvas.width / 30));
+        ctx.font = '700 ' + fontSize + 'px Roboto, Arial, sans-serif';
+        const textW = ctx.measureText(stamp).width;
+        const pad = Math.round(fontSize * 0.4);
+        const bannerH = fontSize + pad * 2;
+        ctx.fillStyle = 'rgba(10,61,49,0.85)';
+        ctx.fillRect(0, canvas.height - bannerH, canvas.width, bannerH);
+        ctx.fillStyle = '#ffd76a';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(stamp, (canvas.width - textW) / 2, canvas.height - bannerH / 2);
+        resolve(canvas.toDataURL('image/jpeg', 0.5));
+      }catch(e){ resolve(dataUri); }
+    };
+    img.onerror = function(){ resolve(dataUri); };
+    img.src = dataUri;
+  });
+}
+
+function triggerPhotoInput(id){
+  const input = document.getElementById(id);
+  if(!input) return;
+  input.value = '';
+  input.click();
+}
+
+function openCamera(type){
+  triggerPhotoInput(type === 'dashboard' ? 'cameraDashboardInput' : 'cameraInteriorInput');
+}
+
+document.getElementById('cameraDashboardInput').addEventListener('change', function(e){ handleCameraPhoto(e, 'dashboard'); });
+document.getElementById('cameraInteriorInput').addEventListener('change', function(e){ handleCameraPhoto(e, 'interior'); });
+
+async function handleCameraPhoto(event, type){
+  const file = event.target.files && event.target.files[0];
+  event.target.value = '';
+  if(!file) { setStatus('statusTakeVehicle', '❌ Aucune photo sélectionnée.', 'error'); return; }
+  if(_takePhotoProcessing) return;
+  _takePhotoProcessing = true;
+  try {
+    setStatus('statusTakeVehicle', '⏳ Traitement de la photo...', 'info');
+    const {bytes} = await fileToCompressedJpeg(file, 340);
+    if(!bytes || !bytes.length) throw new Error('Image vide');
+    const uri = 'data:image/jpeg;base64,' + uint8ToBase64(bytes);
+    const stampedUri = await stampPhotoWithTimestamp(uri);
+    if(!stampedUri || stampedUri.length > 900000) throw new Error('Photo trop lourde');
+    _takePhotos[type] = stampedUri;
+    const previewEl = document.getElementById(type === 'dashboard' ? 'takeDashboardPreview' : 'takeInteriorPreview');
+    if(previewEl) previewEl.innerHTML = `<div style="position:relative;display:inline-block;"><img src="${stampedUri}" style="width:100%;max-width:140px;border-radius:8px;display:block;border:3px solid #27ae60;"><span style="position:absolute;top:-8px;right:-8px;background:#27ae60;color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;">✓</span></div>`;
+    setStatus('statusTakeVehicle', type === 'dashboard' ? '✅ Tableau de bord enregistré.' : '✅ Photo intérieur enregistrée.', 'success');
+  } catch(err) {
+    console.error('Photo prise véhicule:', err);
+    setStatus('statusTakeVehicle', err.message === 'Photo trop lourde' ? '❌ Photo trop lourde. Reprends-la.' : '❌ Impossible de traiter la photo. Réessaie.', 'error');
+  } finally { _takePhotoProcessing = false; }
+}
+
+async function populateTakeSelects(){
+  await populateSelects();
+  _takePhotos = {dashboard: null, interior: null};
+  document.getElementById('takeDashboardPreview').innerHTML = '';
+  document.getElementById('takeInteriorPreview').innerHTML = '';
+  document.getElementById('cameraDashboardInput').value = '';
+  document.getElementById('cameraInteriorInput').value = '';
+  setStatus('statusTakeVehicle', _returnThenTakeNew ? '🔁 Nouveau camion : prends 2 nouvelles photos.' : '📸 Prends les 2 photos.', 'info');
+  
+  let camions = (window._plates || []).filter(p => p.type !== 'remorque');
+  let remorques = (window._plates || []).filter(p => p.type === 'remorque');
+
+  const attachedRemorques = new Set();
+  const tsList = await storage.list('trailerstate:');
+  if(tsList && tsList.keys){
+    for(const key of tsList.keys){
+      const r = await storage.get(key);
+      if(r){ try{ const st = JSON.parse(r.value); if(st.attached) attachedRemorques.add(key.replace('trailerstate:','')); }catch(e){} }
+    }
+  }
+  remorques = remorques.filter(p => !attachedRemorques.has(p.key));
+
+  const takeDmgMap = await getDamageMap();
+  camions = camions.filter(p => !(takeDmgMap[p.key] && takeDmgMap[p.key].unusable));
+  remorques = remorques.filter(p => !(takeDmgMap[p.key] && takeDmgMap[p.key].unusable));
+
+  const driverRes = await storage.get(window._session.key);
+  let changeTrailerKey = '';
+  if(driverRes){
+    const driverData = JSON.parse(driverRes.value);
+    // En prise normale, le chauffeur voit uniquement son véhicule attribué.
+    // Après « Changer camion », il choisit un autre camion mais conserve la remorque déjà accrochée.
+    if(driverData.assignedCamionKey && !_returnThenTakeNew){
+      camions = camions.filter(p => p.key === driverData.assignedCamionKey);
+      if(driverData.assignedRemorqueKey){ remorques = remorques.filter(p => p.key === driverData.assignedRemorqueKey); }
+    }
+    if(_returnThenTakeNew && window._changingCamion){
+      const active = await getDriverActiveTake();
+      changeTrailerKey = active && active.remorqueKey ? active.remorqueKey : '';
+      if(changeTrailerKey){ remorques = remorques.filter(p => p.key === changeTrailerKey); }
+      else { remorques = []; }
+    }
+  }
+  const assignedCamionKey = driverRes ? (JSON.parse(driverRes.value).assignedCamionKey || '') : '';
+
+  // Affiche l'emplacement (parking) connu de chaque camion/remorque pour aider le chauffeur à le retrouver.
+  const trailerStatesTake = await getTrailerStates();
+  const camionLocs = {};
+  for(const c of camions){
+    const locRes = await storage.get('location:' + c.key);
+    if(locRes){ try{ camionLocs[c.key] = JSON.parse(locRes.value).parkingNom || ''; }catch(e){} }
+  }
+  const camionOptionLabel = p => `${p.value}${camionLocs[p.key] ? ' — 🅿️ ' + camionLocs[p.key] : ' — ❔ emplacement inconnu'}`;
+  const remorqueOptionLabel = p => `${p.value}${trailerStatesTake[p.key] && trailerStatesTake[p.key].parkingNom ? ' — 🅿️ ' + trailerStatesTake[p.key].parkingNom : ' — ❔ emplacement inconnu'}`;
+
+  document.getElementById('takeCamion').innerHTML = '<option value="">— Sélectionner —</option>' + camions.map(p => `<option value="${p.key}" ${p.key===assignedCamionKey?'selected':''}>${escapeHtml(camionOptionLabel(p))}</option>`).join('');
+  document.getElementById('takeRemorque').innerHTML = '<option value="">— Sélectionner —</option>' + remorques.map(p => `<option value="${p.key}" ${p.key===changeTrailerKey?'selected':''}>${escapeHtml(remorqueOptionLabel(p))}</option>`).join('');
+  document.getElementById('takeRemorque').disabled = !!(_returnThenTakeNew && window._changingCamion && changeTrailerKey);
+}
+
+async function confirmTakeVehicle(){
+  const camionKey = document.getElementById('takeCamion').value;
+  const remorqueKey = document.getElementById('takeRemorque').value;
+  if(!camionKey){ setStatus('statusTakeVehicle', '❌ Choisis un camion.', 'error'); return; }
+  if(!_takePhotos.dashboard){ setStatus('statusTakeVehicle', '❌ Photo tableau de bord obligatoire.', 'error'); return; }
+  if(!_takePhotos.interior){ setStatus('statusTakeVehicle', '❌ Photo intérieur obligatoire.', 'error'); return; }
+  const camion = (window._plates || []).find(p => p.key === camionKey);
+  const remorque = (window._plates || []).find(p => p.key === remorqueKey);
+  if(!camion){ setStatus('statusTakeVehicle', '❌ Camion introuvable.', 'error'); return; }
+
+  // Empêche toute double prise d'un même véhicule.
+  const activeTakes = await storage.list('vehicletake:');
+  if(activeTakes && activeTakes.keys){
+    for(const key of activeTakes.keys){
+      const r = await storage.get(key);
+      if(!r) continue;
+      let active; try { active = JSON.parse(r.value); } catch(e) { continue; }
+      if(active.dateEnd) continue;
+      if(active.camionKey === camionKey){
+        const who = active.chauffeurKey === window._session.key ? 'toi-même' : (active.chauffeurNom || 'un autre chauffeur');
+        setStatus('statusTakeVehicle', `❌ Ce camion est déjà pris par ${who}.`, 'error');
+        return;
+      }
+      if(remorqueKey && active.remorqueKey === remorqueKey){
+        const who = active.chauffeurKey === window._session.key ? 'toi-même' : (active.chauffeurNom || 'un autre chauffeur');
+        setStatus('statusTakeVehicle', `❌ Cette remorque est déjà prise par ${who}.`, 'error');
+        return;
+      }
+    }
+  }
+
+  setStatus('statusTakeVehicle', '⏳ Enregistrement...', 'info');
+  try {
+    await cleanOldPhotos();
+    const data = {
+      chauffeurKey: window._session.key, chauffeurNom: window._session.name,
+      camionKey, camionValue: camion.value || '',
+      remorqueKey: remorqueKey || '', remorqueValue: remorque ? remorque.value : '',
+      dateStart: new Date().toISOString(),
+      dashboardPhoto: _takePhotos.dashboard, interiorPhoto: _takePhotos.interior,
+      dateEnd: null, endDashboardPhoto: null, endInteriorPhoto: null
+    };
+    const takeKey = 'vehicletake:' + Date.now();
+    await storage.set(takeKey, JSON.stringify(data));
+    if(remorqueKey && remorque){
+      await storage.set('trailerstate:' + remorqueKey, JSON.stringify({attached: true, takeKey, chauffeurKey: window._session.key, chauffeurNom: window._session.name, camionValue: camion.value || '', since: data.dateStart}));
+      if(!window._changingCamion){
+        await storage.set('trailerevent:' + Date.now(), JSON.stringify({type: 'attach', remorqueKey, remorqueValue: remorque.value || '', camionValue: camion.value || '', chauffeurNom: window._session.name, parkingNom: '', date: data.dateStart}));
+      }
+    }
+    _takePhotos = {dashboard: null, interior: null};
+    document.getElementById('takeDashboardPreview').innerHTML = '';
+    document.getElementById('takeInteriorPreview').innerHTML = '';
+    document.getElementById('cameraDashboardInput').value = '';
+    document.getElementById('cameraInteriorInput').value = '';
+    setStatus('statusTakeVehicle', window._changingCamion ? '✅ Nouveau camion pris. La remorque reste accrochée.' : '✅ Véhicule pris avec les 2 photos.', 'success');
+    _returnThenTakeNew = false;
+    window._changingCamion = false;
+    document.getElementById('takeRemorque').disabled = false;
+    setTimeout(() => { showTab('driver-home'); }, 1000);
+  } catch(err) {
+    console.error(err);
+    let msg = '❌ Erreur. ';
+    if(err.name === 'QuotaExceededError' || err.code === 22 || /quota/i.test(err.message || '')) { msg += 'Stockage plein → Nettoyer.';
+    } else { msg += 'Réessaie.'; }
+    setStatus('statusTakeVehicle', msg, 'error');
+  }
+}
+
+// ======== NETTOYAGE ========
+async function cleanOldPhotos(){
+  try {
+    const list = await storage.list('vehicletake:');
+    if(list && list.keys && list.keys.length > 15) {
+      const keys = list.keys.sort().reverse();
+      const toDelete = keys.slice(10);
+      for(const key of toDelete) { await storage.delete(key); }
+    }
+  } catch(e) { console.log('Nettoyage ignoré:', e); }
+}
+
+async function forceCleanStorage(){
+  if(!confirm('Supprimer les anciennes prises de véhicule ?')) return;
+  try {
+    const list = await storage.list('vehicletake:');
+    if(list && list.keys) {
+      let count = 0;
+      for(const key of list.keys) {
+        const res = await storage.get(key);
+        if(res) {
+          const d = JSON.parse(res.value);
+          if(d.dateStart && new Date(d.dateStart) < new Date(Date.now() - 7*24*60*60*1000)) {
+            await storage.delete(key); count++;
+          }
+        }
+      }
+      setStatus('statusBackup', `🧹 ${count} supprimées.`, 'success');
+    }
+    loadBackupCount();
+  } catch(e) { setStatus('statusBackup', '❌ Erreur.', 'error'); }
+}
+
+// ======== RENDRE VEHICULE ========
+function openReturnCamera(type){
+  if(type === 'dashboard'){ document.getElementById('cameraReturnDashboardInput').click(); }
+  else { document.getElementById('cameraReturnInteriorInput').click(); }
+}
+
+document.getElementById('cameraReturnDashboardInput').addEventListener('change', function(e){ handleReturnCameraPhoto(e, 'dashboard'); });
+document.getElementById('cameraReturnInteriorInput').addEventListener('change', function(e){ handleReturnCameraPhoto(e, 'interior'); });
+
+async function handleReturnCameraPhoto(event, type){
+  const file = event.target.files && event.target.files[0];
+  event.target.value = '';
+  if(!file) { setStatus('statusReturnVehicle', '❌ Aucune photo sélectionnée.', 'error'); return; }
+  if(_returnPhotoProcessing) return;
+  _returnPhotoProcessing = true;
+  try {
+    setStatus('statusReturnVehicle', '⏳ Traitement de la photo...', 'info');
+    const {bytes} = await fileToCompressedJpeg(file, 340);
+    if(!bytes || !bytes.length) throw new Error('Image vide');
+    const uri = 'data:image/jpeg;base64,' + uint8ToBase64(bytes);
+    const stampedUri = await stampPhotoWithTimestamp(uri);
+    if(!stampedUri || stampedUri.length > 900000) throw new Error('Photo trop lourde');
+    _returnPhotos[type] = stampedUri;
+    const previewEl = document.getElementById(type === 'dashboard' ? 'returnDashboardPreview' : 'returnInteriorPreview');
+    if(previewEl) previewEl.innerHTML = `<div style="position:relative;display:inline-block;"><img src="${stampedUri}" style="width:100%;max-width:140px;border-radius:8px;display:block;border:3px solid #27ae60;"><span style="position:absolute;top:-8px;right:-8px;background:#27ae60;color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;">✓</span></div>`;
+    setStatus('statusReturnVehicle', type === 'dashboard' ? '✅ Tableau de bord enregistré.' : '✅ Photo intérieur enregistrée.', 'success');
+  } catch(err) {
+    console.error('Photo retour véhicule:', err);
+    setStatus('statusReturnVehicle', err.message === 'Photo trop lourde' ? '❌ Photo trop lourde. Reprends-la.' : '❌ Impossible de traiter la photo. Réessaie.', 'error');
+  } finally { _returnPhotoProcessing = false; }
+}
+
+async function startChangeCamion(key){
+  _returnThenTakeNew = true;
+  window._changingCamion = true;
+  await startReturnVehicle(key);
+}
+
+async function startReturnVehicle(key){
+  _returnKey = key;
+  const rsel = document.getElementById('returnParkingSelect');
+  const parkings = await getParkings();
+  rsel.innerHTML = '<option value="">— Choisir le parking —</option>' + parkings.map(pk => `<option value="${escapeHtml(pk.key)}">${escapeHtml(pk.nom)}</option>`).join('');
+  const returnPanelTitle = document.querySelector('#tab-return-vehicle .panel-title');
+  const returnParkingLabel = rsel ? rsel.parentElement.querySelector('label') : null;
+  if(window._changingCamion){
+    if(returnPanelTitle) returnPanelTitle.textContent = '🔁 Changer de camion';
+    if(returnParkingLabel) returnParkingLabel.textContent = '📍 Où laisses-tu le camion ?';
+  } else {
+    if(returnPanelTitle) returnPanelTitle.textContent = '↩️ Rendre';
+    if(returnParkingLabel) returnParkingLabel.textContent = '📍 Parking';
+  }
+  _returnPhotos = {dashboard: null, interior: null};
+  document.getElementById('returnDashboardPreview').innerHTML = '';
+  document.getElementById('returnInteriorPreview').innerHTML = '';
+  document.getElementById('cameraReturnDashboardInput').value = '';
+  document.getElementById('cameraReturnInteriorInput').value = '';
+  setStatus('statusReturnVehicle', '📸 Prends les 2 photos.', 'info');
+  showTab('return-vehicle');
+}
+
+async function confirmReturnVehicle(){
+  if(!_returnPhotos.dashboard || !_returnPhotos.interior){ setStatus('statusReturnVehicle', '❌ Les 2 photos sont obligatoires.', 'error'); return; }
+  const res = await storage.get(_returnKey);
+  if(!res){ setStatus('statusReturnVehicle', '❌ Erreur.', 'error'); return; }
+  const d = JSON.parse(res.value);
+  const rsel = document.getElementById('returnParkingSelect');
+  if(window._changingCamion){
+    if(!rsel || !rsel.value){ setStatus('statusReturnVehicle', '❌ Choisis le parking où tu laisses le camion.', 'error'); return; }
+  } else if(d.remorqueKey && (!rsel || !rsel.value)){
+    setStatus('statusReturnVehicle', '❌ Choisis l\'emplacement où tu laisses la remorque.', 'error'); return;
+  }
+  d.dateEnd = new Date().toISOString();
+  d.endDashboardPhoto = _returnPhotos.dashboard;
+  d.endInteriorPhoto = _returnPhotos.interior;
+  let parkingNom = '';
+  if(rsel && rsel.value){
+    const parkings = await getParkings();
+    const pk = parkings.find(p => p.key === rsel.value);
+    if(pk){ parkingNom = pk.nom; await storage.set('location:' + d.camionKey, JSON.stringify({parkingKey: pk.key, parkingNom: pk.nom, since: new Date().toISOString()})); }
+  }
+  if(d.remorqueKey && !window._changingCamion){
+    const now2 = new Date().toISOString();
+    await storage.set('trailerstate:' + d.remorqueKey, JSON.stringify({attached: false, parkingKey: rsel ? (rsel.value || '') : '', parkingNom: parkingNom || '', since: now2}));
+    await storage.set('trailerevent:' + Date.now(), JSON.stringify({type: 'detach', remorqueKey: d.remorqueKey, remorqueValue: d.remorqueValue, camionValue: d.camionValue, chauffeurNom: d.chauffeurNom, parkingNom: parkingNom || '(sans emplacement)', date: now2}));
+  }
+  await storage.set(_returnKey, JSON.stringify(d));
+  _returnPhotos = {dashboard: null, interior: null};
+  document.getElementById('returnDashboardPreview').innerHTML = '';
+  document.getElementById('returnInteriorPreview').innerHTML = '';
+  document.getElementById('cameraReturnDashboardInput').value = '';
+  document.getElementById('cameraReturnInteriorInput').value = '';
+  setStatus('statusReturnVehicle', window._changingCamion ? '✅ Camion laissé au parking. Choisis le nouveau camion.' : '✅ Véhicule rendu.', 'success');
+  if(_returnThenTakeNew){ _returnThenTakeNew = false; setTimeout(() => { showTab('take-vehicle'); }, 800); }
+  else { window._changingCamion = false; setTimeout(() => { showTab('driver-home'); }, 800); }
+}
+
+// ======== PARKING ========
+async function getParkings(){
+  const list = await storage.list('parking:');
+  const parkings = [];
+  if(list && list.keys){ for(const key of list.keys){ const r = await storage.get(key); if(r){ try{ parkings.push({key, ...JSON.parse(r.value)}); }catch(e){} } } }
+  return parkings;
+}
+
+async function getTrailerStates(){
+  const states = {};
+  const list = await storage.list('trailerstate:');
+  if(list && list.keys){ for(const key of list.keys){ const r = await storage.get(key); if(r){ try{ states[key.replace('trailerstate:','')] = JSON.parse(r.value); }catch(e){} } } }
+  return states;
+}
+
+async function getDriverActiveTake(){
+  const list = await storage.list('vehicletake:');
+  if(list && list.keys){ for(const key of list.keys){ const r = await storage.get(key); if(!r) continue; let d; try{ d = JSON.parse(r.value); }catch(e){ continue; } if(d.chauffeurKey === window._session.key && !d.dateEnd) return {key, ...d}; } }
+  return null;
+}
+
+async function addParking(){
+  const nom = (document.getElementById('parkingNom').value || '').trim();
+  if(!nom){ setStatus('statusParking', "❌ Donne un nom.", 'error'); return; }
+  await storage.set('parking:' + Date.now(), JSON.stringify({nom}));
+  document.getElementById('parkingNom').value = '';
+  setStatus('statusParking', '✅ Emplacement ajouté.', 'success');
+  loadParkingAdmin();
+}
+
+async function delParking(key){ if(confirm("Supprimer ?")){ await storage.delete(key); loadParkingAdmin(); } }
+
+async function loadParkingAdmin(){
+  await populateSelects();
+  const parkings = await getParkings();
+  const states = await getTrailerStates();
+  const trailers = (window._plates || []).filter(p => p.type === 'remorque');
+  const camions = (window._plates || []).filter(p => p.type !== 'remorque');
+  const parkingDmgMap = await getDamageMap();
+
+  document.getElementById('emptyParkings').style.display = parkings.length ? 'none' : 'block';
+  document.getElementById('parkingsList').innerHTML = parkings.map(p => `<div class="vehicle-card" style="cursor:default;"><div class="vehicle-card-head"><span class="vehicle-plate">🅿️ ${escapeHtml(p.nom)}</span><button class="btn btn-sm btn-danger" onclick="delParking('${p.key}')">✕</button></div></div>`).join('');
+
+  document.getElementById('emptyTrucksStatus').style.display = camions.length ? 'none' : 'block';
+  document.getElementById('trucksStatusList').innerHTML = camions.map(c => {
+    const loc = '📍 ' + (c.type === 'remorque' ? '🚚' : '🚛');
+    return `<div class="vehicle-card" style="cursor:default;${parkingDmgMap[c.key] && parkingDmgMap[c.key].unusable ? 'border:2px solid #e74c3c;' : ''}"><div class="vehicle-card-head"><span class="vehicle-plate">🚛 ${escapeHtml(c.value)}</span><span class="vehicle-type-label camion-label">Camion</span></div><div style="font-size:0.8rem;color:#444;">${loc}</div></div>`;
+  }).join('');
+
+  document.getElementById('emptyTrailersStatus').style.display = trailers.length ? 'none' : 'block';
+  document.getElementById('trailerStatusList').innerHTML = trailers.map(t => {
+    const st = states[t.key];
+    let line = st && st.attached ? `🟢 Accrochée par ${escapeHtml(st.chauffeurNom || '')}` : (st ? `✅ Libre${st.parkingNom ? ' 🅿️ ' + escapeHtml(st.parkingNom) : ''}` : '✅ Libre');
+    return `<div class="vehicle-card" style="cursor:default;${parkingDmgMap[t.key] && parkingDmgMap[t.key].unusable ? 'border:2px solid #e74c3c;' : ''}"><div class="vehicle-card-head"><span class="vehicle-plate">🚚 ${escapeHtml(t.value)}</span><span class="vehicle-type-label remorque-label">Remorque</span></div><div style="font-size:0.8rem;color:#444;">${line}</div></div>`;
+  }).join('');
+}
+
+async function loadParkingDriver(){
+  await populateSelects();
+  setStatus('statusParkingDriver', '');
+  const active = await getDriverActiveTake();
+  const curEl = document.getElementById('driverCurrentTrailer');
+  const freeEl = document.getElementById('freeTrailersList');
+
+  if(!active){
+    curEl.innerHTML = '<p style="font-size:0.85rem;color:#666;">Prends un camion d\'abord.</p>';
+    freeEl.innerHTML = ''; document.getElementById('emptyFreeTrailers').style.display = 'block'; return;
+  }
+
+  const parkings = await getParkings();
+  const parkingOptions = '<option value="">— Choisir —</option>' + parkings.map(p => `<option value="${escapeHtml(p.key)}">${escapeHtml(p.nom)}</option>`).join('');
+
+  if(active.remorqueKey){
+    curEl.innerHTML = `<div class="vehicle-card"><div class="vehicle-card-head"><span class="vehicle-plate">🚚 ${escapeHtml(active.remorqueValue)}</span><span class="vehicle-type-label remorque-label">🟢 Accrochée</span></div><div style="font-size:0.8rem;color:#666;margin-bottom:10px;">Sur 🚛 ${escapeHtml(active.camionValue)}</div><div class="field"><label>📍 Où laisses-tu ?</label><select id="detachParkingSelect">${parkingOptions}</select></div><button class="btn btn-danger" style="width:100%;margin-top:10px;" onclick="detachTrailer()">🔓 Décrocher</button></div>`;
+  } else {
+    curEl.innerHTML = `<p style="font-size:0.85rem;color:#666;">Aucune remorque accrochée.</p>`;
+  }
+
+  const states = await getTrailerStates();
+  let trailers = (window._plates || []).filter(p => p.type === 'remorque');
+  let free = trailers.filter(t => t.key !== active.remorqueKey && !(states[t.key] && states[t.key].attached));
+
+  // Un chauffeur ne peut accrocher que la remorque qui lui est attribuée par l'admin, si une attribution existe.
+  const driverRes2 = await storage.get(window._session.key);
+  const assignedRemorqueKey2 = driverRes2 ? (JSON.parse(driverRes2.value).assignedRemorqueKey || '') : '';
+  if(assignedRemorqueKey2){ free = free.filter(t => t.key === assignedRemorqueKey2); }
+
+  document.getElementById('emptyFreeTrailers').style.display = free.length ? 'none' : 'block';
+  document.getElementById('emptyFreeTrailers').textContent = (assignedRemorqueKey2 && !free.length) ? 'Ta remorque attribuée est déjà accrochée par quelqu\'un d\'autre ou indisponible.' : 'Aucune remorque libre';
+  freeEl.innerHTML = free.map(t => {
+    const st = states[t.key];
+    const locLine = st && st.parkingNom ? `<div style="font-size:0.8rem;color:#444;margin-bottom:8px;">🅿️ ${escapeHtml(st.parkingNom)}</div>` : `<div style="font-size:0.8rem;color:#888;margin-bottom:8px;">❔ Emplacement inconnu</div>`;
+    return `<div class="vehicle-card"><div class="vehicle-card-head"><span class="vehicle-plate">🚚 ${escapeHtml(t.value)}</span><span class="vehicle-type-label remorque-label">✅ Libre</span></div>${locLine}<button class="btn btn-primary" style="width:100%;" onclick="attachTrailer('${t.key}')">🔗 Accrocher</button></div>`;
+  }).join('');
+}
+
+async function detachTrailer(){
+  const active = await getDriverActiveTake();
+  if(!active || !active.remorqueKey){ setStatus('statusParkingDriver', '❌ Aucune remorque.', 'error'); return; }
+  const parkKey = document.getElementById('detachParkingSelect').value;
+  if(!parkKey){ setStatus('statusParkingDriver', '❌ Choisis un emplacement.', 'error'); return; }
+  const parkings = await getParkings();
+  const pk = parkings.find(p => p.key === parkKey);
+  const parkingNom = pk ? pk.nom : '';
+  const now = new Date().toISOString();
+
+  await storage.set('trailerstate:' + active.remorqueKey, JSON.stringify({attached: false, parkingKey: parkKey, parkingNom, since: now}));
+  await storage.set('trailerevent:' + Date.now(), JSON.stringify({type: 'detach', remorqueKey: active.remorqueKey, remorqueValue: active.remorqueValue, camionValue: active.camionValue, chauffeurNom: window._session.name, parkingNom, date: now}));
+
+  const r = await storage.get(active.key);
+  if(r){ const d = JSON.parse(r.value); d.remorqueKey = ''; d.remorqueValue = ''; await storage.set(active.key, JSON.stringify(d)); }
+  await loadParkingDriver();
+  setStatus('statusParkingDriver', `✅ Remorque déposée à ${parkingNom}.`, 'success');
+}
+
+async function attachTrailer(remorqueKey){
+  const active = await getDriverActiveTake();
+  if(!active){ await loadParkingDriver(); setStatus('statusParkingDriver', "❌ Prends un camion d'abord.", 'error'); return; }
+  const remorque = (window._plates || []).find(p => p.key === remorqueKey);
+  if(!remorque) return;
+  const dmgMap = await getDamageMap();
+  if(dmgMap[remorqueKey] && dmgMap[remorqueKey].unusable){ setStatus('statusParkingDriver', '❌ Remorque inutilisable.', 'error'); return; }
+  const stRes = await storage.get('trailerstate:' + remorqueKey);
+  if(stRes){ const st = JSON.parse(stRes.value); if(st && st.attached){ setStatus('statusParkingDriver', '❌ Déjà accrochée.', 'error'); return; } }
+  if(active.remorqueKey && active.remorqueKey !== remorqueKey){ setStatus('statusParkingDriver', '❌ Décroche d\'abord.', 'error'); return; }
+  const driverResCheck = await storage.get(window._session.key);
+  const assignedRemorqueKeyCheck = driverResCheck ? (JSON.parse(driverResCheck.value).assignedRemorqueKey || '') : '';
+  if(assignedRemorqueKeyCheck && assignedRemorqueKeyCheck !== remorqueKey){ setStatus('statusParkingDriver', '❌ Cette remorque ne t\'est pas attribuée.', 'error'); return; }
+
+  const now = new Date().toISOString();
+  await storage.set('trailerevent:' + Date.now(), JSON.stringify({type: 'attach', remorqueKey, remorqueValue: remorque.value, camionValue: active.camionValue, chauffeurNom: window._session.name, parkingNom: '', date: now}));
+  await storage.set('trailerstate:' + remorqueKey, JSON.stringify({attached: true, takeKey: active.key, chauffeurKey: window._session.key, chauffeurNom: window._session.name, camionValue: active.camionValue, since: now}));
+  const r = await storage.get(active.key);
+  if(r){ const d = JSON.parse(r.value); d.remorqueKey = remorqueKey; d.remorqueValue = remorque.value; await storage.set(active.key, JSON.stringify(d)); }
+  await loadParkingDriver();
+  setStatus('statusParkingDriver', `✅ ${remorque.value} accrochée.`, 'success');
+}
+
+// ======== VEHICULES ========
+async function getVehicleLocationShort(plate){
+  if(plate.type === 'remorque'){
+    const stRes = await storage.get('trailerstate:' + plate.key);
+    const st = stRes ? JSON.parse(stRes.value) : null;
+    if(st && st.attached) return {cls:'#27ae60', txt:'🟢 Accrochée'};
+    if(st && st.parkingNom) return {cls:'#444', txt:'🅿️ ' + st.parkingNom};
+    return {cls:'#888', txt:'❔ Sans emplacement'};
+  }
+  const loc = await storage.get('location:' + plate.key);
+  if(loc) return {cls:'#444', txt:'🅿️ ' + JSON.parse(loc.value).parkingNom};
+  return {cls:'#888', txt:'❔ Sans emplacement'};
+}
+
+function getExpiryStatus(dateStr){
+  if(!dateStr) return {cls:'status-unknown', text:'❔ Non renseigné', alert:false};
+  const today = new Date(); today.setHours(0,0,0,0);
+  const exp = new Date(dateStr + 'T00:00:00');
+  const diffDays = Math.round((exp - today) / 86400000);
+  if(diffDays < 30){ const text = diffDays < 0 ? '✕ Expiré' : `🔴 ${diffDays}j`; return {cls:'status-expired', text, alert:true}; }
+  if(diffDays < 60) return {cls:'status-warning', text:`⚠️ ${diffDays}j`, alert:false};
+  return {cls:'status-ok', text:'✓ À jour', alert:false};
+}
+
+async function loadVehiclesList(){
+  await populateSelects();
+  const plates = window._plates || [];
+  const container = document.getElementById('vehiclesList');
+  document.getElementById('vehicleCount').textContent = plates.length;
+  document.getElementById('emptyVehicles').style.display = plates.length ? 'none' : 'block';
+  if(!plates.length){ container.innerHTML = ''; return; }
+
+  const damageCounts = await getDamageMap();
+  let html = '';
+  for(const p of plates){
+    const isCamion = p.type !== 'remorque';
+    const res = await storage.get('vehicledoc:' + p.key);
+    const vd = res ? JSON.parse(res.value) : {};
+    const stTech = getExpiryStatus(vd.expTechnique);
+    const stAss = getExpiryStatus(vd.expAssurance);
+    const stLic = getExpiryStatus(vd.expLicence);
+    const stExt = getExpiryStatus(vd.expExtincteur);
+    const docAlerts = [stTech, stAss, stLic, stExt].filter(s => s.alert).length;
+    const openDamages = (damageCounts[p.key] || {}).open || 0;
+    const loc = await getVehicleLocationShort(p);
+    const icon = isCamion ? '🚛' : '🚚';
+    const label = isCamion ? 'Camion' : 'Remorque';
+    const labelCls = isCamion ? 'camion-label' : 'remorque-label';
+    html += `<div class="vehicle-card" onclick="openVehicleDetail('${p.key}')"><div class="vehicle-card-head"><span class="vehicle-plate">${icon} ${escapeHtml(p.value)}</span><span class="vehicle-type-label ${labelCls}">${label}</span></div><div style="font-size:0.8rem;margin:6px 0 4px;color:${loc.cls};">📍 ${escapeHtml(loc.txt)}</div><div class="vehicle-status-row"><span class="status-dot ${stTech.cls}">CT</span><span class="status-dot ${stAss.cls}">ASS</span><span class="status-dot ${stLic.cls}">LIC</span><span class="status-dot ${stExt.cls}">EXT</span>${docAlerts ? `<span class="damage-badge">🔴 ${docAlerts}</span>` : ''}${(damageCounts[p.key] || {}).unusable ? `<span class="damage-badge">🚫</span>` : ''}${openDamages && !(damageCounts[p.key] || {}).unusable ? `<span class="damage-badge-open">🟠 ${openDamages}</span>` : ''}</div></div>`;
+  }
+  container.innerHTML = html;
+}
+
+async function getDamageMap(){
+  const dList = await storage.list('damage:');
+  const map = {};
+  if(dList && dList.keys){
+    for(const key of dList.keys){
+      const r = await storage.get(key);
+      if(!r) continue;
+      let d; try{ d = JSON.parse(r.value); }catch(e){ continue; }
+      if(d.repaired) continue;
+      if(!map[d.plateKey]) map[d.plateKey] = {open: 0, unusable: false};
+      map[d.plateKey].open++;
+      if(d.unusable) map[d.plateKey].unusable = true;
+    }
+  }
+  return map;
+}
+
+function damageStatusPill(ds){
+  if(!ds) return '';
+  if(ds.unusable) return '<span class="status-pill status-unusable">🔴 INUTILISABLE</span>';
+  return `<span class="status-pill status-damage-open">🟠 ${ds.open}</span>`;
+}
+
+async function openVehicleDetail(plateKey){
+  _currentVehicleKey = plateKey;
+  await populateSelects();
+  const plate = (window._plates || []).find(p => p.key === plateKey);
+  if(!plate) return;
+  const isCamion = plate.type !== 'remorque';
+  const icon = isCamion ? '🚛' : '🚚';
+  document.getElementById('vehicleDetailTitle').textContent = `${icon} ${isCamion ? 'Camion' : 'Remorque'} ${escapeHtml(plate.value)}`;
+
+  const res = await storage.get('vehicledoc:' + plateKey);
+  const vd = res ? JSON.parse(res.value) : {};
+  document.getElementById('vdExpTechnique').value = vd.expTechnique || '';
+  document.getElementById('vdExpAssurance').value = vd.expAssurance || '';
+  document.getElementById('vdExpLicence').value = vd.expLicence || '';
+  document.getElementById('vdExpExtincteur').value = vd.expExtincteur || '';
+
+  const stTech = getExpiryStatus(vd.expTechnique);
+  const stAss = getExpiryStatus(vd.expAssurance);
+  const stLic = getExpiryStatus(vd.expLicence);
+  const stExt = getExpiryStatus(vd.expExtincteur);
+  const dmgMap = await getDamageMap();
+  
+  const box = document.getElementById('vdLocationBox');
+  const loc = await getVehicleLocationShort(plate);
+  const isAdmin = window._session && window._session.role === 'admin';
+  const parkings = await getParkings();
+  let canSet = false;
+  let line = loc.txt;
+  if(plate.type === 'remorque'){
+    const stRes = await storage.get('trailerstate:' + plate.key);
+    const st = stRes ? JSON.parse(stRes.value) : null;
+    if(st && !st.attached) canSet = true;
+  } else {
+    const takesList = await storage.list('vehicletake:');
+    let inUse = false;
+    if(takesList && takesList.keys){ for(const key of takesList.keys){ const r = await storage.get(key); if(r){ const t = JSON.parse(r.value); if(t.camionKey === plate.key && !t.dateEnd) inUse = true; } } }
+    if(!inUse) canSet = true;
+  }
+  box.innerHTML = `<div style="font-size:0.85rem;background:var(--light-gray);border-radius:var(--radius-sm);padding:10px 12px;">${line}</div>${isAdmin && canSet ? `<div class="row" style="margin-top:10px;"><div class="field" style="flex:2;"><select id="vdLocationSelect"><option value="">— Sélectionner —</option>${parkings.map(pk => `<option value="${escapeHtml(pk.key)}">${escapeHtml(pk.nom)}</option>`).join('')}</select></div><div class="field" style="flex:1;align-self:flex-end;"><button class="btn btn-primary" style="width:100%;" onclick="saveVehicleLocation()">💾</button></div></div>` : ''}`;
+
+  document.getElementById('vdStatusSummary').innerHTML = damageStatusPill(dmgMap[plateKey]) + `<span class="status-pill ${stTech.cls}">CT : ${stTech.text}</span><span class="status-pill ${stAss.cls}">ASS : ${stAss.text}</span><span class="status-pill ${stLic.cls}">LIC : ${stLic.text}</span><span class="status-pill ${stExt.cls}">EXT : ${stExt.text}</span>`;
+
+  document.getElementById('vdDocsList').innerHTML = 
+    `<div class="doc-row"><span class="doc-row-label">🪪 Carte grise</span><span class="doc-row-status">${vd.docCarteGrise ? '✅' : '—'}</span><div class="doc-row-actions">${vd.docCarteGrise ? `<a href="${vd.docCarteGrise}" target="_blank" class="btn btn-sm btn-secondary">👁️</a>` : ''}<button class="btn btn-sm ${vd.docCarteGrise ? 'btn-secondary' : 'btn-success'}" onclick="triggerDocUpload('${plateKey}','docCarteGrise')">${vd.docCarteGrise ? '🔄' : '📷'}</button></div></div>
+    <div class="doc-row"><span class="doc-row-label">🔧 Contrôle technique</span><span class="doc-row-status">${vd.docTechnique ? '✅' : '—'}</span><div class="doc-row-actions">${vd.docTechnique ? `<a href="${vd.docTechnique}" target="_blank" class="btn btn-sm btn-secondary">👁️</a>` : ''}<button class="btn btn-sm ${vd.docTechnique ? 'btn-secondary' : 'btn-success'}" onclick="triggerDocUpload('${plateKey}','docTechnique')">${vd.docTechnique ? '🔄' : '📷'}</button></div></div>
+    <div class="doc-row"><span class="doc-row-label">🛡️ Assurance</span><span class="doc-row-status">${vd.docAssurance ? '✅' : '—'}</span><div class="doc-row-actions">${vd.docAssurance ? `<a href="${vd.docAssurance}" target="_blank" class="btn btn-sm btn-secondary">👁️</a>` : ''}<button class="btn btn-sm ${vd.docAssurance ? 'btn-secondary' : 'btn-success'}" onclick="triggerDocUpload('${plateKey}','docAssurance')">${vd.docAssurance ? '🔄' : '📷'}</button></div></div>
+    <div class="doc-row"><span class="doc-row-label">📋 Licence</span><span class="doc-row-status">${vd.docLicence ? '✅' : '—'}</span><div class="doc-row-actions">${vd.docLicence ? `<a href="${vd.docLicence}" target="_blank" class="btn btn-sm btn-secondary">👁️</a>` : ''}<button class="btn btn-sm ${vd.docLicence ? 'btn-secondary' : 'btn-success'}" onclick="triggerDocUpload('${plateKey}','docLicence')">${vd.docLicence ? '🔄' : '📷'}</button></div></div>
+    <div class="doc-row"><span class="doc-row-label">🧯 Extincteur</span><span class="doc-row-status">${vd.docExtincteur ? '✅' : '—'}</span><div class="doc-row-actions">${vd.docExtincteur ? `<a href="${vd.docExtincteur}" target="_blank" class="btn btn-sm btn-secondary">👁️</a>` : ''}<button class="btn btn-sm ${vd.docExtincteur ? 'btn-secondary' : 'btn-success'}" onclick="triggerDocUpload('${plateKey}','docExtincteur')">${vd.docExtincteur ? '🔄' : '📷'}</button></div></div>`;
+
+  const dList = await storage.list('damage:');
+  const damages = [];
+  if(dList && dList.keys){ for(const key of dList.keys){ const r = await storage.get(key); const d = JSON.parse(r.value); if(d.plateKey === plateKey) damages.push({key, ...d}); } }
+  damages.sort((a,b) => { if(a.repaired !== b.repaired) return a.repaired ? 1 : -1; return (b.dateReported||'').localeCompare(a.dateReported||''); });
+  document.getElementById('emptyDamages').style.display = damages.length ? 'none' : 'block';
+  document.getElementById('vdDamagesList').innerHTML = damages.map(d => `
+    <div class="damage-card ${d.repaired ? 'damage-repaired' : (d.unusable ? 'damage-unusable' : '')}">
+      <div><img src="${d.photo}" class="damage-thumb" onclick="openImageFull('${d.photo}')">${d.repaired && d.repairPhoto ? `<img src="${d.repairPhoto}" class="damage-thumb" onclick="openImageFull('${d.repairPhoto}')">` : ''}</div>
+      <div class="damage-info"><div class="damage-desc">${escapeHtml(d.description)}</div>${!d.repaired && d.unusable ? '<div style="font-size:0.72rem;color:#e74c3c;font-weight:800;">🚫 INUTILISABLE</div>' : ''}<div class="damage-date">${d.reportedBy || ''} — ${d.reportedAt ? new Date(d.reportedAt).toLocaleString('fr-FR') : ''}</div>${d.repaired ? `<div class="damage-repaired-label">✅ Réparé</div>` : ''}</div>
+      ${window._session && window._session.role === 'admin' ? `<div class="damage-actions">${!d.repaired ? `<button class="btn btn-sm btn-success" onclick="triggerRepairPhoto('${d.key}')">✅</button>` : ''}<button class="btn btn-sm btn-danger" onclick="deleteDamage('${d.key}')">✕</button></div>` : ''}
+    </div>`).join('');
+
+  setStatus('statusVehicleDetail', '');
+  showTab('vehicle-detail');
+}
+
+async function saveVehicleDates(){
+  if(!_currentVehicleKey) return;
+  const res = await storage.get('vehicledoc:' + _currentVehicleKey);
+  const vd = res ? JSON.parse(res.value) : {};
+  vd.expTechnique = document.getElementById('vdExpTechnique').value;
+  vd.expAssurance = document.getElementById('vdExpAssurance').value;
+  vd.expLicence = document.getElementById('vdExpLicence').value;
+  vd.expExtincteur = document.getElementById('vdExpExtincteur').value;
+  await storage.set('vehicledoc:' + _currentVehicleKey, JSON.stringify(vd));
+  setStatus('statusVehicleDetail', '✅ Dates enregistrées.', 'success');
+  openVehicleDetail(_currentVehicleKey);
+}
+
+async function saveVehicleLocation(){
+  const sel = document.getElementById('vdLocationSelect');
+  if(!sel || !sel.value) return;
+  const plate = (window._plates || []).find(p => p.key === _currentVehicleKey);
+  if(!plate) return;
+  if(plate.type === 'remorque'){
+    const stRes = await storage.get('trailerstate:' + plate.key);
+    const st = stRes ? JSON.parse(stRes.value) : null;
+    if(st && st.attached){ setStatus('statusVehicleDetail', '❌ Remorque accrochée.', 'error'); return; }
+    await storage.set('trailerstate:' + plate.key, JSON.stringify({...(st || {}), attached: false, parkingKey: sel.value, parkingNom: sel.options[sel.selectedIndex].textContent, since: new Date().toISOString()}));
+  } else {
+    await storage.set('location:' + plate.key, JSON.stringify({parkingKey: sel.value, parkingNom: sel.options[sel.selectedIndex].textContent, since: new Date().toISOString()}));
+  }
+  await openVehicleDetail(_currentVehicleKey);
+  setStatus('statusVehicleDetail', '✅ Emplacement enregistré.', 'success');
+}
+
+function triggerDocUpload(plateKey, field){ _docUploadContext = {plateKey, field}; document.getElementById('docFileInput').click(); }
+document.getElementById('docFileInput').addEventListener('change', handleDocFile);
+
+async function handleDocFile(event){
+  const file = event.target.files[0]; event.target.value = '';
+  if(!file || !_docUploadContext) return;
+  const {plateKey, field} = _docUploadContext;
+  try{
+    setStatus('statusVehicleDetail', '⏳ Enregistrement...', '');
+    const {bytes, width, height} = await fileToCompressedJpeg(file, 1200);
+    const pdfBytes = buildPdfFromJpeg(bytes, width, height);
+    const pdfUri = 'data:application/pdf;base64,' + uint8ToBase64(pdfBytes);
+    const res = await storage.get('vehicledoc:' + plateKey);
+    const vd = res ? JSON.parse(res.value) : {};
+    vd[field] = pdfUri;
+    await storage.set('vehicledoc:' + plateKey, JSON.stringify(vd));
+    setStatus('statusVehicleDetail', '✅ Document enregistré.', 'success');
+    openVehicleDetail(plateKey);
+  }catch(err){ console.error(err); setStatus('statusVehicleDetail', "❌ Erreur.", 'error'); }
+}
+
+function triggerDamagePhoto(){ _damageUploadContext = {mode: 'new'}; document.getElementById('damageFileInput').click(); }
+function triggerRepairPhoto(damageKey){ _damageUploadContext = {mode: 'repair', damageKey}; document.getElementById('damageFileInput').click(); }
+
+document.getElementById('damageFileInput').addEventListener('change', handleDamageFile);
+
+async function handleDamageFile(event){
+  const file = event.target.files[0]; event.target.value = '';
+  if(!file || !_damageUploadContext) return;
+  try{
+    const {bytes} = await fileToCompressedJpeg(file, 800);
+    const jpegUri = 'data:image/jpeg;base64,' + uint8ToBase64(bytes);
+    if(_damageUploadContext.mode === 'new'){
+      _pendingDamagePhoto = jpegUri;
+      document.getElementById('damageDescInput').value = '';
+      document.getElementById('damageUnusableInput').checked = false;
+      const vsel = document.getElementById('damageVehicleSelect');
+      const opts = (window._plates || []).map(p => ({key: p.key, label: (p.type === 'remorque' ? '🚚 Remorque ' : '🚛 Camion ') + p.value}));
+      vsel.innerHTML = opts.map(o => `<option value="${escapeHtml(o.key)}">${escapeHtml(o.label)}</option>`).join('');
+      if(_currentVehicleKey && opts.some(o => o.key === _currentVehicleKey)) vsel.value = _currentVehicleKey;
+      setStatus('statusDamageModal', '');
+      document.getElementById('damageModal').classList.add('active');
+    } else {
+      const key = _damageUploadContext.damageKey;
+      const res = await storage.get(key);
+      if(!res) return;
+      const d = JSON.parse(res.value);
+      d.repaired = true; d.repairPhoto = jpegUri; d.dateRepaired = new Date().toISOString().slice(0,10); d.repairedAt = new Date().toISOString(); d.repairedBy = window._session ? window._session.name : '';
+      await storage.set(key, JSON.stringify(d));
+      openVehicleDetail(d.plateKey);
+    }
+  }catch(err){ console.error(err); setStatus('statusVehicleDetail', "❌ Erreur.", 'error'); }
+}
+
+function closeDamageModal(){ document.getElementById('damageModal').classList.remove('active'); _pendingDamagePhoto = null; }
+
+async function confirmNewDamage(){
+  const desc = document.getElementById('damageDescInput').value.trim();
+  if(!desc){ setStatus('statusDamageModal', '❌ Description obligatoire.', 'error'); return; }
+  if(!_pendingDamagePhoto) return;
+  const targetVehicleKey = (document.getElementById('damageVehicleSelect') || {}).value || _currentVehicleKey;
+  if(!targetVehicleKey) return;
+  const nowIso = new Date().toISOString();
+  await storage.set('damage:' + Date.now(), JSON.stringify({
+    plateKey: targetVehicleKey, photo: _pendingDamagePhoto, description: desc,
+    dateReported: nowIso.slice(0,10), reportedAt: nowIso,
+    reportedBy: window._session ? window._session.name : '',
+    reportedByRole: window._session ? window._session.role : '',
+    unusable: document.getElementById('damageUnusableInput').checked,
+    repaired: false, repairPhoto: null, dateRepaired: null, repairedAt: null, repairedBy: ''
+  }));
+  document.getElementById('damageModal').classList.remove('active');
+  _pendingDamagePhoto = null;
+  await openVehicleDetail(targetVehicleKey);
+  setStatus('statusVehicleDetail', '✅ Dégât signalé.', 'success');
+}
+
+async function deleteDamage(key){ if(confirm('Supprimer ?')){ await storage.delete(key); openVehicleDetail(_currentVehicleKey); } }
+
+function openImageFull(src){ document.getElementById('imageModalImg').src = src; document.getElementById('imageModal').classList.add('active'); }
+function closeImageModal(){ document.getElementById('imageModal').classList.remove('active'); document.getElementById('imageModalImg').src = ''; }
+
+// ======== DEGATS ========
+async function getAllDamages(){
+  const dList = await storage.list('damage:');
+  const out = [];
+  if(dList && dList.keys){ for(const key of dList.keys){ const r = await storage.get(key); if(r){ let d; try{ d = JSON.parse(r.value); }catch(e){ continue; } out.push({key, ...d}); } } }
+  return out;
+}
+
+async function loadDamagesView(){
+  const plates = window._plates || [];
+  const plateByKey = {};
+  plates.forEach(p => plateByKey[p.key] = p);
+  const all = await getAllDamages();
+  const open = all.filter(d => !d.repaired).sort((a,b) => (b.reportedAt||'').localeCompare(a.reportedAt||''));
+  const repaired = all.filter(d => d.repaired).sort((a,b) => (b.repairedAt||'').localeCompare(a.repairedAt||''));
+
+  document.getElementById('emptyDamagesOpen').style.display = open.length ? 'none' : 'block';
+  document.getElementById('damagesOpenList').innerHTML = open.length ? open.map(d => {
+    const plate = plateByKey[d.plateKey] || {value: d.plateKey, type: '?'};
+    const isCamion = plate.type !== 'remorque';
+    const icon = isCamion ? '🚛' : '🚚';
+    return `<div class="vehicle-card" style="cursor:default;"><div class="vehicle-card-head"><span class="vehicle-plate">${icon} ${escapeHtml(plate.value)}</span><span class="vehicle-type-label ${isCamion ? 'camion-label' : 'remorque-label'}">${isCamion ? 'Camion' : 'Remorque'}</span></div><div class="damage-card ${d.unusable ? 'damage-unusable' : ''}"><div><img src="${d.photo}" class="damage-thumb" onclick="openImageFull('${d.photo}')"></div><div class="damage-info"><div class="damage-desc">${escapeHtml(d.description)}</div>${d.unusable ? '<div style="color:#e74c3c;font-weight:800;">🚫 INUTILISABLE</div>' : ''}<div class="damage-date">${d.reportedBy || ''} — ${d.reportedAt ? new Date(d.reportedAt).toLocaleString('fr-FR') : ''}</div></div></div></div>`;
+  }).join('') : '';
+
+  document.getElementById('emptyDamagesRepaired').style.display = repaired.length ? 'none' : 'block';
+  document.getElementById('damagesRepairedList').innerHTML = repaired.length ? repaired.map(d => {
+    const plate = plateByKey[d.plateKey] || {value: d.plateKey, type: '?'};
+    const isCamion = plate.type !== 'remorque';
+    const icon = isCamion ? '🚛' : '🚚';
+    return `<div class="vehicle-card" style="cursor:default;"><div class="vehicle-card-head"><span class="vehicle-plate">${icon} ${escapeHtml(plate.value)}</span><span class="vehicle-type-label ${isCamion ? 'camion-label' : 'remorque-label'}">${isCamion ? 'Camion' : 'Remorque'}</span></div><div class="damage-card damage-repaired"><div><img src="${d.photo}" class="damage-thumb" onclick="openImageFull('${d.photo}')"></div><div class="damage-info"><div class="damage-desc">${escapeHtml(d.description)}</div><div class="damage-repaired-label">✅ Réparé</div></div></div></div>`;
+  }).join('') : '';
+}
+
+async function exportDamagesWhatsApp(){
+  const all = await getAllDamages();
+  const open = all.filter(d => !d.repaired);
+  const plateByKey = {};
+  (window._plates || []).forEach(p => plateByKey[p.key] = p);
+  let text;
+  if(!open.length){ text = '✅ Aucun dégât en cours.'; }
+  else {
+    const byPlate = {};
+    open.forEach(d => { if(!byPlate[d.plateKey]) byPlate[d.plateKey] = []; byPlate[d.plateKey].push(d); });
+    text = '⚠️ DÉGÂTS EN COURS\n';
+    Object.keys(byPlate).forEach(pk => {
+      const plate = plateByKey[pk] || {value: pk};
+      const isCamion = plate.type !== 'remorque';
+      const icon = isCamion ? '🚛' : '🚚';
+      text += '\n' + icon + ' ' + plate.value + '\n';
+      byPlate[pk].forEach(d => { text += '• ' + d.description + (d.unusable ? ' 🔴 INUTILISABLE' : '') + '\n'; });
+    });
+  }
+  window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+  setStatus('statusDamagesExport', '📤 WhatsApp ouvert.', 'success');
+}
+
+// ======== POINTAGE ========
+function isTodayIso(iso){
+  const d = new Date(iso); const now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+}
+
+async function getTodayArrival(chauffeurKey){
+  const list = await storage.list('arrival:');
+  if(!list || !list.keys) return null;
+  for(const key of list.keys){
+    const r = await storage.get(key);
+    if(!r) continue;
+    let a; try{ a = JSON.parse(r.value); }catch(e){ continue; }
+    if(a.chauffeurKey === chauffeurKey && isTodayIso(a.at)) return {key, ...a};
+  }
+  return null;
+}
+
+async function loadDriverArrivalBox(){
+  const box = document.getElementById('driverArrivalBox');
+  const today = await getTodayArrival(window._session.key);
+  if(today && today.departAt){
+    box.innerHTML = `<div class="vehicle-card" style="border:2px solid #0f5c4a;"><div class="vehicle-card-head"><span class="vehicle-plate">✅ Arrivé ${new Date(today.at).toLocaleTimeString('fr-FR')} · Parti ${new Date(today.departAt).toLocaleTimeString('fr-FR')}</span></div></div>`;
+  } else if(today){
+    box.innerHTML = `<div class="vehicle-card" style="border:2px solid #27ae60;margin-bottom:10px;"><div class="vehicle-card-head"><span class="vehicle-plate">✅ Arrivé ${new Date(today.at).toLocaleTimeString('fr-FR')}</span></div></div><button class="btn btn-secondary" style="width:100%;margin-bottom:14px;" onclick="driverCheckOut()">🚪 Départ</button>`;
+  } else {
+    box.innerHTML = `<button class="btn btn-primary" style="width:100%;margin-bottom:14px;" onclick="driverCheckIn()">🕐 Arrivée</button>`;
+  }
+}
+
+async function driverCheckIn(){
+  const already = await getTodayArrival(window._session.key);
+  if(already){ loadDriverArrivalBox(); return; }
+  await storage.set('arrival:' + Date.now(), JSON.stringify({chauffeurKey: window._session.key, nom: window._session.name, at: new Date().toISOString()}));
+  loadDriverArrivalBox();
+}
+
+async function driverCheckOut(){
+  const today = await getTodayArrival(window._session.key);
+  if(!today || today.departAt){ loadDriverArrivalBox(); return; }
+  const d = Object.assign({}, today); delete d.key; d.departAt = new Date().toISOString();
+  await storage.set(today.key, JSON.stringify(d));
+  loadDriverArrivalBox();
+}
+
+async function adminSetArrival(){
+  const key = document.getElementById('arrivalDriverSelect').value;
+  const dateStr = document.getElementById('arrivalDateInput').value;
+  const timeStr = document.getElementById('arrivalTimeInput').value;
+  const departStr = document.getElementById('departTimeInput').value;
+  if(!key || !dateStr || (!timeStr && !departStr)){ setStatus('statusArrivalsForm', '❌ Chauffeur, date et heure requis.', 'error'); return; }
+  const dRes = await storage.get(key);
+  if(!dRes){ setStatus('statusArrivalsForm', '❌ Chauffeur introuvable.', 'error'); return; }
+  const d = JSON.parse(dRes.value);
+  const list = await storage.list('arrival:');
+  let existing = null;
+  if(list && list.keys){
+    for(const k of list.keys){
+      const r = await storage.get(k);
+      if(!r) continue;
+      let a; try{ a = JSON.parse(r.value); }catch(e){ continue; }
+      if(a.chauffeurKey === key && (a.at||'').slice(0,10) === dateStr){ existing = k; break; }
+    }
+  }
+  const atIso = timeStr ? new Date(dateStr + 'T' + timeStr + ':00').toISOString() : new Date(dateStr + 'T00:00:00').toISOString();
+  const departIso = departStr ? new Date(dateStr + 'T' + departStr + ':00').toISOString() : null;
+  await storage.set(existing || ('arrival:' + Date.now()), JSON.stringify({chauffeurKey: key, nom: d.nom, at: atIso, departAt: departIso || null, byAdmin: window._session ? window._session.name : ''}));
+  setStatus('statusArrivalsForm', '✅ Pointage enregistré.', 'success');
+  loadArrivals();
+}
+
+async function loadArrivals(){
+  const dList = await storage.list('driver:');
+  const dSel = document.getElementById('arrivalDriverSelect');
+  dSel.innerHTML = '<option value="">— Sélectionner —</option>';
+  if(dList && dList.keys){ for(const k of dList.keys){ const r = await storage.get(k); if(r){ const dd = JSON.parse(r.value); dSel.innerHTML += `<option value="${escapeHtml(k)}">${escapeHtml(dd.nom || '')}</option>`; } } }
+  if(!document.getElementById('arrivalDateInput').value){ const now = new Date(); document.getElementById('arrivalDateInput').value = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0'); }
+  
+  const list = await storage.list('arrival:');
+  const all = [];
+  if(list && list.keys){ for(const key of list.keys){ const r = await storage.get(key); if(r){ try{ all.push({key, ...JSON.parse(r.value)}); }catch(e){} } } }
+  all.sort((a,b) => (b.at||'').localeCompare(a.at||''));
+
+  const todayList = all.filter(a => isTodayIso(a.at));
+  document.getElementById('emptyArrivals').style.display = todayList.length ? 'none' : 'block';
+  document.getElementById('arrivalsToday').innerHTML = todayList.map(a => `
+    <div class="vehicle-card" style="cursor:default;">
+      <div class="vehicle-card-head">
+        <span class="vehicle-plate">${escapeHtml(a.nom || '')}</span>
+        <span class="vehicle-type-label">${new Date(a.at).toLocaleTimeString('fr-FR')} → ${a.departAt ? new Date(a.departAt).toLocaleTimeString('fr-FR') : '—'}</span>
+      </div>
+    </div>`).join('');
+}
+
+// ======== EXPORT POINTAGE PDF ========
+function loadJsPdf(){
+  if(window.jspdf && window.jspdf.jsPDF) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload = () => resolve(!!(window.jspdf && window.jspdf.jsPDF));
+    s.onerror = () => resolve(false);
+    document.head.appendChild(s);
+  });
+}
+
+async function getTodayArrivalsList(){
+  const list = await storage.list('arrival:');
+  const all = [];
+  if(list && list.keys){ for(const key of list.keys){ const r = await storage.get(key); if(r){ try{ all.push({key, ...JSON.parse(r.value)}); }catch(e){} } } }
+  all.sort((a,b) => (a.at||'').localeCompare(b.at||''));
+  return all.filter(a => isTodayIso(a.at));
+}
+
+function fmtTime(iso){
+  if(!iso) return '—';
+  try { return new Date(iso).toLocaleTimeString('fr-FR'); } catch(e){ return '—'; }
+}
+
+async function exportPointeusePdf(){
+  const rows = await getTodayArrivalsList();
+  const statusEl = document.getElementById('statusArrivalsExport');
+  if(!rows.length){
+    if(statusEl) statusEl.textContent = '❌ Aucun pointage aujourd\u0027hui à exporter.';
+    return;
+  }
+  const d = new Date();
+  const dateStr = String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+  const dateFile = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+
+  // --- PDF : colonnes Chauffeur | Arrivée | Départ ---
+  let pdfOk = false;
+  const jsPdfReady = await loadJsPdf();
+  if(jsPdfReady){
+  try {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(16);
+    pdf.text('Pointage du ' + dateStr, 14, 18);
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(10);
+    pdf.text('Chauffeur', 14, 32); pdf.text('Arrivée', 120, 32); pdf.text('Départ', 160, 32);
+    pdf.setLineWidth(0.3); pdf.line(14, 35, 196, 35);
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(10);
+    let y = 42;
+    rows.forEach(a => {
+      pdf.text(String(a.nom || ''), 14, y);
+      pdf.text(fmtTime(a.at), 120, y);
+      pdf.text(fmtTime(a.departAt), 160, y);
+      y += 8;
+    });
+    pdf.save('pointage-' + dateFile + '.pdf');
+    pdfOk = true;
+  } catch(e){ pdfOk = false; }
+  }
+
+  // --- Texte WhatsApp aligné sur les mêmes colonnes ---
+  let text = '\uD83D\uDD50 POINTAGE DU ' + dateStr + '\n';
+  text += 'Chauffeur | Arrivée | Départ\n';
+  text += '------------------------------\n';
+  rows.forEach(a => { text += (a.nom || '') + ' : ' + fmtTime(a.at) + ' \u2192 ' + fmtTime(a.departAt) + '\n'; });
+  window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+
+  if(statusEl) statusEl.textContent = pdfOk ? '✅ PDF téléchargé et WhatsApp ouvert.' : '📤 WhatsApp ouvert (PDF indisponible hors connexion).';
+}
+
+// ======== SAUVEGARDE ========
+function loadBackupCount(){
+  const db = _loadDb();
+  const n = Object.keys(db).length;
+  document.getElementById('backupCount').textContent = n + ' enregistrement(s).';
+}
+
+function exportAllData(){
+  const db = _loadDb();
+  const blob = new Blob([JSON.stringify(db, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'cmr-sauvegarde-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  setStatus('statusBackup', '✅ Sauvegarde téléchargée.', 'success');
+}
+
+function importDataFile(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    let data;
+    try{ data = JSON.parse(e.target.result); }catch(err){ setStatus('statusBackup', '❌ Fichier invalide.', 'error'); return; }
+    if(!data || typeof data !== 'object'){ setStatus('statusBackup', '❌ Format invalide.', 'error'); return; }
+    const n = Object.keys(data).length;
+    if(!confirm('Importer ' + n + ' enregistrement(s) ?')) return;
+    const db = _loadDb();
+    for(const k in data){ db[k] = data[k]; }
+    _saveDb(db);
+    setStatus('statusBackup', '✅ ' + n + ' enregistrement(s) importé(s).', 'success');
+    loadBackupCount();
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ======== SELECTS ========
+async function populateSelects(){
+  const pList = await storage.list('partner:'); const partners = [];
+  if(pList && pList.keys){ for(const key of pList.keys){ const res = await storage.get(key); partners.push({key, ...JSON.parse(res.value)}); } }
+  const tList = await storage.list('carrier:'); const carriers = [];
+  if(tList && tList.keys){ for(const key of tList.keys){ const res = await storage.get(key); carriers.push({key, ...JSON.parse(res.value)}); } }
+  window._partners = partners; window._carriers = carriers;
+  ['selExp','selDest'].forEach(id=>{ const sel = document.getElementById(id); sel.innerHTML = '<option value="">— Sélectionner —</option>' + partners.map(p=>`<option value="${p.key}">${escapeHtml(p.nom)}</option>`).join(''); });
+  ['selT5','selT6','selT7'].forEach(id=>{ const sel = document.getElementById(id); sel.innerHTML = '<option value="">— Sélectionner —</option>' + carriers.map(c=>`<option value="${c.key}">${escapeHtml(c.nom)}</option>`).join(''); });
+
+  const plList = await storage.list('plate:'); const plates = [];
+  if(plList && plList.keys){ for(const key of plList.keys){ const res = await storage.get(key); plates.push({key, ...JSON.parse(res.value)}); } }
+  window._plates = plates;
+  const camionPlates = plates.filter(p=>p.type!=='remorque');
+  const remorquePlates = plates.filter(p=>p.type==='remorque');
+  ['c5plaqueCamion','c6plaqueCamion','c7plaque'].forEach(id=>{
+    const sel = document.getElementById(id);
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">— Sélectionner —</option>' + camionPlates.map(p=>`<option value="${escapeHtml(p.value)}">${escapeHtml(p.value)}</option>`).join('');
+    if(prev) sel.value = prev;
+  });
+  ['c5plaqueRemorque','c6plaqueRemorque'].forEach(id=>{
+    const sel = document.getElementById(id);
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">— Sélectionner —</option>' + remorquePlates.map(p=>`<option value="${escapeHtml(p.value)}">${escapeHtml(p.value)}</option>`).join('');
+    if(prev) sel.value = prev;
+  });
+}
+
+function fillPartner(which){
+  const selId = which==='exp' ? 'selExp' : 'selDest';
+  const key = document.getElementById(selId).value;
+  const p = (window._partners||[]).find(x=>x.key===key);
+  if(!p) return;
+  if(which==='exp'){
+    document.getElementById('c1adr').value = p.adr || '';
+    document.getElementById('c1etat').value = p.etat || '';
+    document.getElementById('c3lieu').value = p.etat || '';
+    document.getElementById('c4lieu').value = p.etat || '';
+    document.getElementById('c11lieu').value = p.etat || '';
+    window._c1nom = p.nom;
+  } else {
+    document.getElementById('c2adr').value = p.adr || '';
+    document.getElementById('c2etat').value = p.etat || '';
+    window._c2nom = p.nom;
+  }
+}
+
+function fillCarrier(which){
+  const key = document.getElementById(which==='5' ? 'selT5' : which==='6' ? 'selT6' : 'selT7').value;
+  const c = (window._carriers||[]).find(x=>x.key===key);
+  if(c){
+    let adr = c.adr || '', licence = c.licence || '', ra = c.ra || '';
+    if(which==='5'){ document.getElementById('c5info').value = adr; document.getElementById('c5licence').value = licence; document.getElementById('c5ra').value = ra; window._c5nom = c.nom; }
+    else if(which==='6'){ document.getElementById('c6info').value = adr; document.getElementById('c6licence').value = licence; document.getElementById('c6ra').value = ra; window._c6nom = c.nom; }
+    else if(which==='7'){ document.getElementById('c7info').value = adr + (licence ? ' — Licence: ' + licence : ''); window._c7nom = c.nom; }
+  }
+  const camionSelectId = which==='5' ? 'c5plaqueCamion' : which==='6' ? 'c6plaqueCamion' : 'c7plaque';
+  filterCamionPlateSelect(camionSelectId, key);
+}
+
+function filterCamionPlateSelect(selectId, carrierKey){
+  const sel = document.getElementById(selectId);
+  if(!sel) return;
+  const prev = sel.value;
+  const camionPlates = (window._plates || []).filter(p => p.type !== 'remorque');
+  const list = carrierKey ? camionPlates.filter(p => !p.carrierKey || p.carrierKey === carrierKey) : camionPlates;
+  sel.innerHTML = '<option value="">— Sélectionner —</option>' + list.map(p=>`<option value="${escapeHtml(p.value)}">${escapeHtml(p.value)}</option>`).join('');
+  if(list.some(p => p.value === prev)) sel.value = prev;
+}
+
+// ======== WIZARD ========
+const WIZARD_STEPS = ['Référence & Expéditeur', 'Destinataire', 'Prise en charge & Livraison', 'Transporteur principal', 'Sous-traitant & successif', "Temps d'attente", 'Réserves', 'Marchandises', "Établissement & Instructions", 'Signature'];
+let _wizardStep = 1;
+
+function showWizardStep(n){
+  const total = WIZARD_STEPS.length;
+  if(n < 1) n = 1; if(n > total) n = total;
+  _wizardStep = n;
+  document.querySelectorAll('#tab-form .wizard-step').forEach(s=>{ s.style.display = (parseInt(s.dataset.step, 10) === n) ? 'block' : 'none'; });
+  document.getElementById('wizardLabel').textContent = `Étape ${n} / ${total} — ${WIZARD_STEPS[n-1]}`;
+  document.getElementById('wizardFill').style.width = (n/total*100) + '%';
+  document.getElementById('wizardPrevBtn').style.visibility = n === 1 ? 'hidden' : 'visible';
+  document.getElementById('wizardNextBtn').style.display = n === total ? 'none' : 'inline-flex';
+  document.getElementById('wizardSaveBtn').style.display = n === total ? 'inline-flex' : 'none';
+  window.scrollTo(0,0);
+}
+function wizardNext(){ showWizardStep(_wizardStep + 1); }
+function wizardPrev(){ showWizardStep(_wizardStep - 1); }
+
+function addMarchandiseLine(){
+  const container = document.getElementById('marchandisesContainer');
+  const line = document.createElement('div');
+  line.className = 'line-item';
+  line.innerHTML = `<input type="text" class="marchandise-input" placeholder="PMC" style="flex:2;"><input type="text" class="marchandise-input awb-input" placeholder="AWB" inputmode="numeric" maxlength="12" style="flex:2;"><input type="text" class="marchandise-input" placeholder="PCS" style="flex:1; max-width:80px;"><input type="text" class="marchandise-input" placeholder="KG" style="flex:1; max-width:80px;"><button class="btn-remove-line" onclick="removeMarchandiseLine(this)">✕</button>`;
+  container.appendChild(line);
+}
+function removeMarchandiseLine(btn){ const container = document.getElementById('marchandisesContainer'); if(container.children.length > 1){ btn.parentElement.remove(); } else { alert('Il doit rester au moins une ligne.'); } }
+
+function getMarchandisesData(){
+  const inputs = document.querySelectorAll('.marchandise-input');
+  const lines = []; let currentLine = [];
+  inputs.forEach((input, index) => {
+    currentLine.push(input.value.trim());
+    if((index + 1) % 4 === 0){
+      if(currentLine.some(v => v !== '')){ 
+        const pmc = currentLine[0] || '', awb = currentLine[1] || '', pcs = currentLine[2] || '', kg = currentLine[3] || '';
+        let line = '';
+        if(pmc) line += pmc;
+        if(awb) line += (line ? '  ' : '') + awb;
+        if(pcs) line += (line ? '  ' : '') + pcs + ' PCS';
+        if(kg) line += (line ? '  ' : '') + kg + ' KG';
+        if(line) lines.push(line);
+      }
+      currentLine = [];
+    }
+  });
+  return lines.join('\n');
+}
+
+function clearForm(){
+  document.querySelectorAll('#tab-form input[type=text], #tab-form input[type=date], #tab-form input[type=time], #tab-form textarea').forEach(el=>el.value='');
+  document.querySelectorAll('#tab-form select').forEach(el=>el.selectedIndex=0);
+  document.querySelectorAll('#tab-form input[type=checkbox]').forEach(el=>el.checked=false);
+  document.querySelectorAll('.marchandise-input').forEach(el=>el.value='');
+  document.getElementById('signPreview').innerHTML = '<span class="placeholder">Aucune signature</span>';
+  document.getElementById('c15signName').value = '';
+  _signatureData = null;
+  document.getElementById('c15signFile').value = '';
+  window._c1nom=''; window._c2nom=''; window._c5nom=''; window._c6nom=''; window._c7nom='';
+  setStatus('statusForm', '');
+  showWizardStep(1);
+}
+
+async function nextCmrNumber(){
+  const res = await storage.get('meta:cmr_counter');
+  let n = res ? parseInt(res.value, 10) : 0;
+  n += 1;
+  await storage.set('meta:cmr_counter', String(n));
+  return 'CMR-' + String(n).padStart(6, '0');
+}
+
+async function saveAndPrint(){
+  const now = new Date();
+  const numCmr = await nextCmrNumber();
+  const dateStr = now.toLocaleDateString('fr-FR');
+  const heureStr = now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('c8ladenAankomst').value = heureStr;
+  document.getElementById('numCmr').value = numCmr;
+  document.getElementById('c11date').value = dateStr;
+  document.getElementById('c3date').value = dateStr;
+
+  const data = {
+    numCmr, c1nom: window._c1nom || '', c1adr: document.getElementById('c1adr').value, c1etat: document.getElementById('c1etat').value,
+    c2nom: window._c2nom || '', c2adr: document.getElementById('c2adr').value, c2etat: document.getElementById('c2etat').value,
+    c3lieu: document.getElementById('c3lieu').value, c3date: document.getElementById('c3date').value,
+    c4lieu: document.getElementById('c4lieu').value, c4date: document.getElementById('c4date').value,
+    c5nom: window._c5nom || '', c5info: document.getElementById('c5info').value, c5licence: document.getElementById('c5licence').value, c5ra: document.getElementById('c5ra').value,
+    c5plaqueCamion: document.getElementById('c5plaqueCamion').value, c5plaqueRemorque: document.getElementById('c5plaqueRemorque').value,
+    c6nom: window._c6nom || '', c6info: document.getElementById('c6info').value, c6licence: document.getElementById('c6licence').value, c6ra: document.getElementById('c6ra').value,
+    c6plaqueCamion: document.getElementById('c6plaqueCamion').value, c6plaqueRemorque: document.getElementById('c6plaqueRemorque').value,
+    c7nom: window._c7nom || '', c7info: document.getElementById('c7info').value, c7plaque: document.getElementById('c7plaque').value,
+    c8ladenAankomst: heureStr, c8ladenVertrek: document.getElementById('c8ladenVertrek').value,
+    c8lossenAankomst: document.getElementById('c8lossenAankomst').value, c8lossenVertrek: document.getElementById('c8lossenVertrek').value,
+    c9: document.getElementById('c9').value, c10: getMarchandisesData(),
+    c11lieu: document.getElementById('c11lieu').value, c11date: dateStr,
+    c13remb: document.getElementById('c13remb').checked, c13palettes: document.getElementById('c13palettes').checked,
+    c15signature: _signatureData || '', c15signName: document.getElementById('c15signName').value.trim()
+  };
+
+  if(!data.c1nom || !data.c2nom){ setStatus('statusForm', '❌ Sélectionne expéditeur et destinataire.', 'error'); return; }
+  await storage.set('cmr:' + Date.now(), JSON.stringify(data));
+  setStatus('statusForm', '✅ Enregistré !', 'success');
+  renderPrintCopies(data);
+  setTimeout(()=>window.print(), 300);
+}
+
+function loadSignature(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){ _signatureData = e.target.result; document.getElementById('signPreview').innerHTML = `<img src="${e.target.result}" alt="Signature">`; };
+  reader.readAsDataURL(file);
+}
+
+// ======== IMPRESSION ========
+function renderPrintCopies(data){
+  const c5plaque = data.c5plaqueCamion ? 'Camion: '+data.c5plaqueCamion : '';
+  const c5remorque = data.c5plaqueRemorque ? 'Remorque: '+data.c5plaqueRemorque : '';
+  const c5plaqueComplet = c5plaque + (c5plaque && c5remorque ? '      ' : '') + c5remorque;
+  const c6plaque = data.c6plaqueCamion ? 'Camion: '+data.c6plaqueCamion : '';
+  const c6remorque = data.c6plaqueRemorque ? 'Remorque: '+data.c6plaqueRemorque : '';
+  const c6plaqueComplet = c6plaque + (c6plaque && c6remorque ? '      ' : '') + c6remorque;
+  const tempsAttente = fmt('Laden (Chargement):','  Aankomst: '+(data.c8ladenAankomst || ''),'  Vertrek: '+(data.c8ladenVertrek || ''),'','Lossen (Déchargement):','  Aankomst: '+(data.c8lossenAankomst || ''),'  Vertrek: '+(data.c8lossenVertrek || ''));
+  let sigHtml = data.c15signature && data.c15signature.startsWith('data:image') ? `<img src="${data.c15signature}" style="max-height:60px;max-width:200px;display:block;margin:2px auto;">` : `<span style="color:#999;font-style:italic;font-size:7pt;">Signature</span>`;
+  if(data.c15signName) sigHtml += `<div style="font-size:5.5pt;color:#666;text-align:center;">${escapeHtml(data.c15signName)}</div>`;
+  const marchandises = data.c10 ? data.c10.split('\n').map(l => l.trim()).filter(l => l).join('\n') : '';
+
+  const copies = [1, 2, 3, 4];
+  const colors = {1:{border:'#cc0000',number:'#cc0000'},2:{border:'#0066cc',number:'#0066cc'},3:{border:'#008800',number:'#008800'},4:{border:'#000000',number:'#000000'}};
+  const labels = {1:"Exemplaire pour l'expéditeur",2:"Exemplaire pour le destinataire",3:"Exemplaire pour le transporteur",4:"Exemplaire pour le transporteur"};
+  
+  document.getElementById('printArea').innerHTML = copies.map(num => {
+    const c = colors[num];
+    return `<div class="print-copy" style="margin-bottom:12px;"><div style="border:2px solid ${c.border};max-width:1000px;margin:0 auto;background:#fff;font-family:Arial,sans-serif;font-size:10pt;"><div style="display:flex;align-items:flex-start;border-bottom:2px solid ${c.border};padding:6px 10px;gap:10px;flex-wrap:wrap;"><div style="font-size:28pt;font-weight:bold;color:${c.number};min-width:60px;line-height:1;">${num}</div><div style="flex:1;font-size:7pt;line-height:1.2;min-width:180px;"><b style="color:${c.number};font-size:9pt;">LETTRE DE VOITURE • VRACHTBRIEF • FRACHTBRIEF</b><br><span style="font-style:italic;color:#333;">${labels[num]}</span><br>Ce transport est soumis à la Convention CMR.</div><div style="font-size:7pt;font-weight:bold;color:${c.number};border:2px solid ${c.border};padding:2px 10px;text-align:center;white-space:nowrap;min-width:70px;">CMR<br>N°<br><span style="font-size:11pt;">${data.numCmr || ''}</span></div></div><div style="display:grid;grid-template-columns:1fr 1fr;">
+      <div style="border:1px solid ${c.border};padding:4px 6px;font-size:7pt;min-height:100px;"><span style="font-weight:bold;color:${c.number};font-size:5.5pt;">1 — Expéditeur</span><div style="white-space:pre-line;font-size:7pt;">${escapeHtml(fmt(data.c1nom, data.c1adr, data.c1etat))}</div></div>
+      <div style="border:1px solid ${c.border};padding:4px 6px;font-size:7pt;min-height:120px;"><span style="font-weight:bold;color:${c.number};font-size:5.5pt;">5 — Transporteur principal</span><div style="white-space:pre-line;font-size:7pt;">${escapeHtml(fmt(data.c5nom, data.c5info, 'Licence: '+(data.c5licence || ''), c5plaqueComplet))}</div></div>
+      <div style="border:1px solid ${c.border};padding:4px 6px;font-size:7pt;min-height:100px;"><span style="font-weight:bold;color:${c.number};font-size:5.5pt;">2 — Destinataire</span><div style="white-space:pre-line;font-size:7pt;">${escapeHtml(fmt(data.c2nom, data.c2adr, data.c2etat))}</div></div>
+      <div style="border:1px solid ${c.border};padding:4px 6px;font-size:7pt;min-height:120px;"><span style="font-weight:bold;color:${c.number};font-size:5.5pt;">6 — Sous-traitant</span><div style="white-space:pre-line;font-size:7pt;">${escapeHtml(fmt(data.c6nom, data.c6info, 'Licence: '+(data.c6licence || ''), c6plaqueComplet))}</div></div>
+      <div style="border:1px solid ${c.border};padding:4px 6px;font-size:7pt;min-height:65px;"><span style="font-weight:bold;color:${c.number};font-size:5.5pt;">3 — Prise en charge</span><div style="white-space:pre-line;font-size:7pt;">${escapeHtml(fmt(data.c3lieu, data.c3date))}</div></div>
+      <div style="border:1px solid ${c.border};padding:4px 6px;font-size:7pt;min-height:65px;"><span style="font-weight:bold;color:${c.number};font-size:5.5pt;">7 — Successif</span><div style="white-space:pre-line;font-size:7pt;">${escapeHtml(fmt(data.c7nom, data.c7info))}</div></div>
+      <div style="border:1px solid ${c.border};padding:4px 6px;font-size:7pt;min-height:45px;"><span style="font-weight:bold;color:${c.number};font-size:5.5pt;">4 — Livraison</span><div style="white-space:pre-line;font-size:7pt;">${escapeHtml(fmt(data.c4lieu, data.c4date))}</div></div>
+      <div style="border:1px solid ${c.border};padding:4px 6px;font-size:7pt;min-height:65px;"><span style="font-weight:bold;color:${c.number};font-size:5.5pt;">8 — Temps d'attente</span><div style="white-space:pre-line;font-size:7pt;">${escapeHtml(tempsAttente)}</div></div>
+      <div style="border:1px solid ${c.border};padding:4px 6px;font-size:7pt;min-height:80px;grid-column:1/-1;"><span style="font-weight:bold;color:${c.number};font-size:5.5pt;">9 — Réserves</span><div style="white-space:pre-line;font-size:7pt;">${escapeHtml(data.c9)}</div></div>
+      <div style="border:1px solid ${c.border};padding:4px 6px;font-size:7pt;min-height:250px;grid-column:1/-1;"><span style="font-weight:bold;color:${c.number};font-size:5.5pt;">10 — Marchandises</span><div style="white-space:pre-line;font-size:14pt;">${escapeHtml(marchandises)}</div></div>
+      <div style="border:1px solid ${c.border};padding:4px 6px;font-size:7pt;min-height:65px;"><span style="font-weight:bold;color:${c.number};font-size:5.5pt;">11 — Établissement</span><div style="white-space:pre-line;font-size:7pt;">${escapeHtml(fmt(data.c11lieu, data.c11date))}</div></div>
+      <div style="border:1px solid ${c.border};padding:4px 6px;font-size:7pt;min-height:65px;"><span style="font-weight:bold;color:${c.number};font-size:5.5pt;">13 — Instructions</span><div style="white-space:pre-line;font-size:7pt;">${escapeHtml(fmt(data.c13remb?'☑ Contre remboursement':'', data.c13palettes?'☑ Reprise palettes vides':''))}</div></div>
+    </div><div style="display:grid;grid-template-columns:repeat(3,1fr);border-top:2px solid ${c.border};">
+      <div style="border:1px solid ${c.border};border-bottom:none;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6px;"><span style="font-weight:bold;color:${c.number};font-size:5.5pt;text-align:center;">12 — Signature expéditeur</span></div>
+      <div style="border:1px solid ${c.border};border-bottom:none;border-left:none;border-right:none;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6px;"><span style="font-weight:bold;color:${c.number};font-size:5.5pt;text-align:center;">15 — Signature transporteur</span><div style="display:flex;flex-direction:column;align-items:center;width:100%;">${sigHtml}</div></div>
+      <div style="border:1px solid ${c.border};border-bottom:none;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6px;"><span style="font-weight:bold;color:${c.number};font-size:5.5pt;text-align:center;">16 — Signature destinataire</span></div>
+    </div></div></div>`;
+  }).join('');
+}
+
+// ======== HISTORY ========
+async function loadHistory(){
+  const body = document.getElementById('historyBody');
+  body.innerHTML='';
+  const list = await storage.list('cmr:');
+  const keys = list && list.keys ? list.keys.sort().reverse() : [];
+  document.getElementById('emptyH').style.display = keys.length===0 ? 'block':'none';
+  document.getElementById('historyCount').textContent = keys.length;
+  for(const key of keys){
+    const res = await storage.get(key);
+    if(!res) continue;
+    const d = JSON.parse(res.value);
+    const tr = document.createElement('tr');
+    tr.style.background = d.proofPdf ? 'rgba(46,125,50,0.12)' : 'rgba(198,40,40,0.10)';
+    tr.innerHTML = `<td>${escapeHtml(d.numCmr)}</td><td>${escapeHtml(d.c1nom)}</td><td>${escapeHtml(d.c2nom)}</td><td>${escapeHtml(d.c3date)}</td><td><button class="btn btn-sm btn-secondary" onclick="openViewModal('${key}')">👁️</button><button class="btn btn-sm btn-primary" onclick="reprintFromHistory('${key}')">🖨️</button><button class="btn btn-sm btn-danger" onclick="delCmr('${key}')">✕</button></td>`;
+    body.appendChild(tr);
+  }
+}
+
+async function searchByPmcAwb(){
+  const query = document.getElementById('searchPmcAwb').value.trim().toLowerCase();
+  if(!query){ setStatus('statusSearch', '❌ Entre un numéro.', 'error'); return; }
+  const list = await storage.list('cmr:');
+  const keys = list && list.keys ? list.keys : [];
+  const matches = [];
+  for(const key of keys){
+    const res = await storage.get(key);
+    if(!res) continue;
+    const d = JSON.parse(res.value);
+    if((d.c10 || '').toLowerCase().includes(query)){ matches.push(key); }
+  }
+  const body = document.getElementById('historyBody');
+  body.innerHTML='';
+  document.getElementById('emptyH').style.display = matches.length===0 ? 'block':'none';
+  document.getElementById('historyCount').textContent = matches.length;
+  for(const key of matches.sort().reverse()){
+    const res = await storage.get(key);
+    if(!res) continue;
+    const d = JSON.parse(res.value);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${escapeHtml(d.numCmr)}</td><td>${escapeHtml(d.c1nom)}</td><td>${escapeHtml(d.c2nom)}</td><td>${escapeHtml(d.c3date)}</td><td><button class="btn btn-sm btn-secondary" onclick="openViewModal('${key}')">👁️</button><button class="btn btn-sm btn-primary" onclick="reprintFromHistory('${key}')">🖨️</button><button class="btn btn-sm btn-danger" onclick="delCmr('${key}')">✕</button></td>`;
+    body.appendChild(tr);
+  }
+  setStatus('statusSearch', '✅ ' + matches.length + ' trouvé(s).', 'success');
+}
+
+function resetHistorySearch(){ document.getElementById('searchPmcAwb').value = ''; setStatus('statusSearch', ''); loadHistory(); }
+async function delCmr(key){ if(confirm('Supprimer ?')){ await storage.delete(key); loadHistory(); } }
+async function reprintFromHistory(key){ const res = await storage.get(key); if(!res) return; renderPrintCopies(JSON.parse(res.value)); setTimeout(()=>window.print(), 400); }
+
+// ======== SEND ========
+async function loadSendList(){
+  const body = document.getElementById('sendBody');
+  body.innerHTML='';
+  const list = await storage.list('cmr:');
+  const keys = list && list.keys ? list.keys.sort().reverse() : [];
+  document.getElementById('emptySend').style.display = keys.length===0 ? 'block':'none';
+  document.getElementById('sendCount').textContent = keys.length;
+  for(const key of keys){
+    const res = await storage.get(key);
+    if(!res) continue;
+    const d = JSON.parse(res.value);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${escapeHtml(d.numCmr)}</td><td>${escapeHtml(d.c1nom)}</td><td>${d.proofPdf ? '✅' : '—'}</td><td><button class="btn btn-sm" style="background:${d.proofPdf ? '#2e7d32' : '#155e4c'};color:#fff;" onclick="triggerProofUpload('${key}')">${d.proofPdf ? '📄' : '📷'}</button></td>`;
+    body.appendChild(tr);
+  }
+}
+
+function triggerProofUpload(key){ _proofKey = key; document.getElementById('proofFileInput').click(); }
+
+// ======== PDF ========
+function buildPdfFromJpeg(jpegBytes, width, height){
+  const enc = new TextEncoder();
+  const chunks = []; let offset = 0;
+  function push(strOrBytes){ const bytes = (typeof strOrBytes === 'string') ? enc.encode(strOrBytes) : strOrBytes; chunks.push(bytes); offset += bytes.length; }
+  push("%PDF-1.4\n");
+  const obj1Offset = offset; push("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+  const obj2Offset = offset; push("2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n");
+  const obj3Offset = offset; push("3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 "+width+" "+height+"] /Resources << /XObject << /Im0 4 0 R >> /ProcSet [/PDF /ImageC] >> /Contents 5 0 R >>\nendobj\n");
+  const obj4Offset = offset; push("4 0 obj\n<< /Type /XObject /Subtype /Image /Width "+width+" /Height "+height+" /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length "+jpegBytes.length+" >>\nstream\n"); push(jpegBytes); push("\nendstream\nendobj\n");
+  const contentStream = "q "+width+" 0 0 "+height+" 0 0 cm /Im0 Do Q";
+  const obj5Offset = offset; push("5 0 obj\n<< /Length "+contentStream.length+" >>\nstream\n"+contentStream+"\nendstream\nendobj\n");
+  const xrefOffset = offset;
+  function pad10(n){ return String(n).padStart(10,'0'); }
+  let xref = "xref\n0 6\n0000000000 65535 f \n";
+  xref += pad10(obj1Offset)+" 00000 n \n"; xref += pad10(obj2Offset)+" 00000 n \n"; xref += pad10(obj3Offset)+" 00000 n \n";
+  xref += pad10(obj4Offset)+" 00000 n \n"; xref += pad10(obj5Offset)+" 00000 n \n";
+  push(xref);
+  push("trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n"+xrefOffset+"\n%%EOF");
+  const total = chunks.reduce((s,c)=>s+c.length,0);
+  const result = new Uint8Array(total);
+  let pos = 0;
+  for(const c of chunks){ result.set(c, pos); pos += c.length; }
+  return result;
+}
+
+document.getElementById('proofFileInput').addEventListener('change', handleProofFile);
+
+async function handleProofFile(event){
+  const file = event.target.files[0];
+  if(!file || !_proofKey) return;
+  try{
+    const imgUrl = URL.createObjectURL(file);
+    const img = await new Promise((res, rej)=>{ const im = new Image(); im.onload = ()=>res(im); im.onerror = rej; im.src = imgUrl; });
+    const {bytes, width, height} = await fileToCompressedJpeg(file, 1200);
+    const pdfBytes = buildPdfFromJpeg(bytes, width, height);
+    const b64 = uint8ToBase64(pdfBytes);
+    const dataUri = 'data:application/pdf;base64,' + b64;
+    const imgB64 = uint8ToBase64(bytes);
+    const imgDataUri = 'data:image/jpeg;base64,' + imgB64;
+    const res = await storage.get(_proofKey);
+    if(!res){ setStatus('statusSend', '❌ Erreur.', 'error'); return; }
+    const d = JSON.parse(res.value);
+    d.proofPdf = dataUri; d.proofImage = imgDataUri;
+    await storage.set(_proofKey, JSON.stringify(d));
+    setStatus('statusSend', '✅ Preuve enregistrée.', 'success');
+    loadHistory(); loadSendList();
+  }catch(err){ console.error(err); setStatus('statusSend', '❌ Erreur.', 'error'); }
+}
+
+// ======== MODALS ========
+function openEditModal(key, type){ _editKey = key; _editType = type; document.getElementById('editModal').classList.add('active'); document.getElementById('editModalTitle').textContent = '✏️ Modifier'; setStatus('statusEdit', ''); storage.get(key).then(res => { if(!res) return; const data = JSON.parse(res.value); let html = ''; if(type === 'partner'){ html = `<div class="field"><label>Nom *</label><input id="editNom" value="${escapeHtml(data.nom)}"></div><div class="field"><label>Adresse</label><input id="editAdr" value="${escapeHtml(data.adr)}"></div><div class="field"><label>État</label><input id="editEtat" value="${escapeHtml(data.etat)}"></div>`; } else if(type === 'plate'){ const carriers = window._carriers || []; html = `<div class="field"><label>Type *</label><select id="editPlType"><option value="camion" ${data.type==='camion'?'selected':''}>🚛 Camion</option><option value="remorque" ${data.type==='remorque'?'selected':''}>🚚 Remorque</option></select></div><div class="field"><label>N° plaque *</label><input id="editPlValue" value="${escapeHtml(data.value)}"></div><div class="row" id="editPlCarrierRow" style="display:${data.type==='camion'?'flex':'none'};"><div class="field"><select id="editPlCarrier"><option value="">— Aucun —</option>${carriers.map(c=>`<option value="${c.key}" ${data.carrierKey===c.key?'selected':''}>${escapeHtml(c.nom)}</option>`).join('')}</select></div></div>`; } else if(type === 'driver' || type === 'admin'){ html = `<div class="field"><label>Nom *</label><input id="editNom" value="${escapeHtml(data.nom)}"></div><div class="field"><label>Nouveau code (4 chiffres)</label><input type="password" inputmode="numeric" maxlength="4" id="editPin" placeholder="Laisser vide pour ne pas changer"></div>`; } else { let rue = data.adr || '', cp = ''; if(rue.includes(' - ')){ const parts = rue.split(' - '); rue = parts[0]; cp = parts.slice(1).join(' - '); } html = `<div class="field"><label>Nom *</label><input id="editNom" value="${escapeHtml(data.nom)}"></div><div class="field"><label>Rue</label><input id="editRue" value="${escapeHtml(rue)}"></div><div class="field"><label>CP/Ville</label><input id="editCp" value="${escapeHtml(cp)}"></div><div class="field"><label>Licence</label><input id="editLicence" value="${escapeHtml(data.licence || '')}"></div><div class="field"><label>R.A.</label><input id="editRa" value="${escapeHtml(data.ra || '')}"></div>`; } document.getElementById('editModalContent').innerHTML = html; }); }
+function closeEditModal(){ document.getElementById('editModal').classList.remove('active'); _editKey = null; _editType = null; }
+async function saveEdit(){ const key = _editKey, type = _editType; if(!key) return; if(type === 'driver' || type === 'admin'){ const nom = document.getElementById('editNom').value.trim(); if(!nom){ setStatus('statusEdit', '❌ Nom obligatoire.', 'error'); return; } const newPin = document.getElementById('editPin').value.trim(); if(newPin && !/^\d{4}$/.test(newPin)){ setStatus('statusEdit', '❌ Code : 4 chiffres.', 'error'); return; } const res = await storage.get(key); const existing = res ? JSON.parse(res.value) : {}; existing.nom = nom; if(newPin) existing.pin = newPin; await storage.set(key, JSON.stringify(existing)); setStatus('statusEdit', '✅ Modifié !', 'success'); setTimeout(() => { closeEditModal(); loadDrivers(); loadAdmins(); }, 600); return; } let data = {}; if(type === 'partner'){ const nom = document.getElementById('editNom').value.trim(); if(!nom){ setStatus('statusEdit', '❌ Nom obligatoire.', 'error'); return; } data = {nom, adr: document.getElementById('editAdr').value.trim(), etat: document.getElementById('editEtat').value.trim()}; } else if(type === 'plate'){ const value = document.getElementById('editPlValue').value.trim(); if(!value){ setStatus('statusEdit', '❌ N° plaque obligatoire.', 'error'); return; } data = {value, type: document.getElementById('editPlType').value, carrierKey: document.getElementById('editPlCarrier').value || ''}; } else { const nom = document.getElementById('editNom').value.trim(); if(!nom){ setStatus('statusEdit', '❌ Nom obligatoire.', 'error'); return; } const rue = document.getElementById('editRue').value.trim(); const cp = document.getElementById('editCp').value.trim(); let adrComplete = rue; if(cp) adrComplete += (adrComplete ? ' - ' : '') + cp; data = {nom, adr: adrComplete, licence: document.getElementById('editLicence').value.trim(), ra: document.getElementById('editRa').value.trim()}; } await storage.set(key, JSON.stringify(data)); setStatus('statusEdit', '✅ Modifié !', 'success'); setTimeout(() => { closeEditModal(); loadContacts(); loadPlates(); }, 600); }
+
+function openViewModal(key){ _viewKey = key; document.getElementById('viewModal').classList.add('active'); storage.get(key).then(res => { if(!res) return; const data = JSON.parse(res.value); _viewData = data; document.getElementById('viewModalContent').innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><strong>N° CMR</strong><br>${escapeHtml(data.numCmr)}</div><div><strong>Date</strong><br>${escapeHtml(data.c3date)}</div><div><strong>Expéditeur</strong><br>${escapeHtml(data.c1nom)}</div><div><strong>Destinataire</strong><br>${escapeHtml(data.c2nom)}</div></div>${data.c10 ? `<div style="margin:6px 0;padding:6px 12px;background:#f8f8f8;border-radius:4px;"><strong>Marchandises :</strong><br><pre style="font-size:0.9rem;white-space:pre-wrap;margin:0;">${escapeHtml(data.c10)}</pre></div>` : ''}${data.proofPdf ? `<div style="margin-top:10px;"><embed src="${data.proofPdf}" type="application/pdf" style="width:100%;height:300px;border-radius:6px;border:1px solid #ccc;"></div>` : '<div style="margin-top:10px;color:#999;">Aucune preuve</div>'}`; }); }
+function closeViewModal(){ document.getElementById('viewModal').classList.remove('active'); _viewKey = null; }
+function reprintCmr(){ if(!_viewData) return; closeViewModal(); renderPrintCopies(_viewData); setTimeout(()=>window.print(), 400); }
+
+// ======== FLEET ========
+async function loadFleet(){
+  await populateSelects();
+  const plates = window._plates || [];
+  const fleetDmgMap = await getDamageMap();
+  const takesList = await storage.list('vehicletake:');
+  const takes = [];
+  if(takesList && takesList.keys){ for(const key of takesList.keys){ const r = await storage.get(key); if(r) takes.push({key, ...JSON.parse(r.value)}); } }
+  document.getElementById('fleetCount').textContent = plates.length;
+  document.getElementById('emptyFleet').style.display = plates.length ? 'none' : 'block';
+  const locByPlate = {};
+  for(const p of plates){ locByPlate[p.key] = await getVehicleLocationShort(p); }
+  const availableCards = [];
+  const usedCards = [];
+  plates.forEach(p => {
+    const isCamion = p.type !== 'remorque';
+    const active = takes.find(t => !t.dateEnd && (t.camionKey === p.key || t.remorqueKey === p.key));
+    const lastEnd = takes.find(t => t.dateEnd && (t.camionKey === p.key || t.remorqueKey === p.key));
+    const loc = locByPlate[p.key];
+    const icon = isCamion ? '🚛' : '🚚';
+    const label = isCamion ? 'Camion' : 'Remorque';
+    const labelCls = isCamion ? 'camion-label' : 'remorque-label';
+    const dmgBorder = fleetDmgMap[p.key] && fleetDmgMap[p.key].unusable ? 'border-left-color:#e74c3c;' : '';
+    const head = `<span class="vc-plate">${icon} ${escapeHtml(p.value)}</span><span class="vc-type ${labelCls}">${label}</span>`;
+    const pill = `<div class="vc-line">${damageStatusPill(fleetDmgMap[p.key])}</div>`;
+    if(active){
+      usedCards.push(`<div class="vehicle-card-compact" style="${dmgBorder}">${head}${pill}<div class="vc-line">👤 <strong>${escapeHtml(active.chauffeurNom)}</strong></div><div class="vc-line" style="color:#666;">Depuis le ${new Date(active.dateStart).toLocaleString('fr-FR')}</div></div>`);
+    } else {
+      const rendu = lastEnd ? `<div class="vc-line" style="color:#666;">Rendu le ${new Date(lastEnd.dateEnd).toLocaleString('fr-FR')}</div>` : '';
+      availableCards.push(`<div class="vehicle-card-compact" style="${dmgBorder}">${head}${pill}${rendu}<div class="vc-line" style="color:${loc.cls};">📍 ${escapeHtml(loc.txt)}</div></div>`);
+    }
+  });
+  document.getElementById('fleetAvailableCount').textContent = availableCards.length;
+  document.getElementById('fleetUsedCount').textContent = usedCards.length;
+  document.getElementById('fleetAvailableList').innerHTML = availableCards.join('');
+  document.getElementById('fleetUsedList').innerHTML = usedCards.join('');
+  document.getElementById('emptyFleetAvailable').style.display = availableCards.length ? 'none' : 'block';
+  document.getElementById('emptyFleetUsed').style.display = usedCards.length ? 'none' : 'block';
+}
+
+// ======== INIT ========
+document.addEventListener('DOMContentLoaded', function(){
+  const activeTab = document.querySelector('.tab.active');
+  if(!activeTab){ document.getElementById('tab-home').classList.add('active'); }
+  populateSelects();
+  initFirebaseSync();
+});
+
+document.addEventListener('input', function(e){
+  if(!e.target.classList || !e.target.classList.contains('awb-input')) return;
+  const el = e.target;
+  const digits = el.value.replace(/\D/g, '').slice(0, 11);
+  let formatted = digits;
+  if(digits.length > 3){ formatted = digits.slice(0,3) + '-' + digits.slice(3); }
+  el.value = formatted;
+});
+</script>
+</body>
+</html>

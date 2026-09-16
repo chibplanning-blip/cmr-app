@@ -10,6 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -17,23 +18,29 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.jarvis.assistant.data.AiProvider
 import com.jarvis.assistant.data.SecurePrefs
+import com.jarvis.assistant.data.UpdateChecker
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(onDone: () -> Unit) {
     val context = LocalContext.current
     val securePrefs = remember { SecurePrefs(context) }
+    val updateChecker = remember { UpdateChecker(context) }
+    val coroutineScope = rememberCoroutineScope()
 
     var selectedProvider by remember { mutableStateOf(securePrefs.provider) }
     var geminiKey by remember { mutableStateOf(securePrefs.geminiApiKey.orEmpty()) }
     var claudeKey by remember { mutableStateOf(securePrefs.claudeApiKey.orEmpty()) }
     var geminiModel by remember { mutableStateOf(securePrefs.geminiModel) }
     var claudeModel by remember { mutableStateOf(securePrefs.claudeModel) }
+    var updateStatus by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
@@ -112,5 +119,30 @@ fun SettingsScreen(onDone: () -> Unit) {
         ) {
             Text("Enregistrer")
         }
+
+        Text("Mises à jour :", style = MaterialTheme.typography.titleMedium)
+        OutlinedButton(
+            onClick = {
+                updateStatus = "Vérification..."
+                coroutineScope.launch {
+                    val update = updateChecker.checkForUpdate()
+                    if (update == null) {
+                        updateStatus = "Jarvis est déjà à jour."
+                    } else {
+                        updateStatus = "Nouvelle version trouvée, téléchargement..."
+                        try {
+                            updateChecker.downloadAndInstall(update)
+                            updateStatus = "Installation lancée."
+                        } catch (e: Exception) {
+                            updateStatus = "Échec de la mise à jour : ${e.message}"
+                        }
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Vérifier les mises à jour")
+        }
+        updateStatus?.let { Text(it) }
     }
 }

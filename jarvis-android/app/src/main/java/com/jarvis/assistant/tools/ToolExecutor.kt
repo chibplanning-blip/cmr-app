@@ -16,6 +16,7 @@ class ToolExecutor(context: Context) {
     private val appLauncher = AppLauncherTool(context)
     private val phoneActions = PhoneActionsTool(context)
     private val phoneSettings = PhoneSettingsTool(context)
+    private val alarmTool = AlarmTool(context)
 
     suspend fun execute(
         toolName: String,
@@ -41,6 +42,8 @@ class ToolExecutor(context: Context) {
             "toggle_wifi" -> phoneSettings.openWifiPanel()
             "toggle_bluetooth" -> phoneSettings.openBluetoothPanel()
             "open_airplane_mode_settings" -> phoneSettings.openAirplaneModeSettings()
+            "set_alarm" -> alarmTool.setAlarm(input.getInt("hour"), input.getInt("minute"), input.optString("label", null))
+            "open_alarms_list" -> alarmTool.openAlarmsList()
             else -> "Outil inconnu : $toolName"
         }
     }

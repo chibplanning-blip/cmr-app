@@ -112,14 +112,19 @@ fun ChatScreen(onOpenSettings: () -> Unit, viewModel: ChatViewModel = viewModel(
         },
         floatingActionButton = { MicButton(state = state, onClick = { viewModel.startListening() }) }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize().weight(1f).padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(messages) { message ->
-                    MessageBubble(role = message.role, text = message.text)
+        Column(modifier = Modifier.fillMaxSize().padding(padding).hudCorners()) {
+            Box(modifier = Modifier.fillMaxSize().weight(1f)) {
+                if (messages.isEmpty()) {
+                    ReactorEmblem(modifier = Modifier.fillMaxSize())
+                }
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize().padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(messages) { message ->
+                        MessageBubble(role = message.role, text = message.text)
+                    }
                 }
             }
 
@@ -194,6 +199,67 @@ private fun StatusLabel(state: AssistantState) {
                 modifier = Modifier.fillMaxWidth()
             )
         }
+    }
+}
+
+/** Thin corner brackets, like a targeting HUD frame - the clearest "Iron Man" tell. */
+private fun Modifier.hudCorners(): Modifier = this.drawBehind {
+    val length = 22.dp.toPx()
+    val inset = 6.dp.toPx()
+    val stroke = 2.dp.toPx()
+    val color = JarvisCyanDim
+
+    // top-left
+    drawLine(color, androidx.compose.ui.geometry.Offset(inset, inset), androidx.compose.ui.geometry.Offset(inset + length, inset), stroke)
+    drawLine(color, androidx.compose.ui.geometry.Offset(inset, inset), androidx.compose.ui.geometry.Offset(inset, inset + length), stroke)
+    // top-right
+    drawLine(color, androidx.compose.ui.geometry.Offset(size.width - inset, inset), androidx.compose.ui.geometry.Offset(size.width - inset - length, inset), stroke)
+    drawLine(color, androidx.compose.ui.geometry.Offset(size.width - inset, inset), androidx.compose.ui.geometry.Offset(size.width - inset, inset + length), stroke)
+    // bottom-left
+    drawLine(color, androidx.compose.ui.geometry.Offset(inset, size.height - inset), androidx.compose.ui.geometry.Offset(inset + length, size.height - inset), stroke)
+    drawLine(color, androidx.compose.ui.geometry.Offset(inset, size.height - inset), androidx.compose.ui.geometry.Offset(inset, size.height - inset - length), stroke)
+    // bottom-right
+    drawLine(color, androidx.compose.ui.geometry.Offset(size.width - inset, size.height - inset), androidx.compose.ui.geometry.Offset(size.width - inset - length, size.height - inset), stroke)
+    drawLine(color, androidx.compose.ui.geometry.Offset(size.width - inset, size.height - inset), androidx.compose.ui.geometry.Offset(size.width - inset, size.height - inset - length), stroke)
+}
+
+/** The arc-reactor emblem shown before the first message - concentric glowing rings. */
+@Composable
+private fun ReactorEmblem(modifier: Modifier = Modifier) {
+    val transition = rememberInfiniteTransition(label = "reactor-pulse")
+    val pulse by transition.animateFloat(
+        initialValue = 0.5f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2200, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "reactor-pulse-value"
+    )
+
+    Box(modifier = modifier, contentAlignment = androidx.compose.ui.Alignment.Center) {
+        Canvas(modifier = Modifier.size(180.dp)) {
+            val outerRadius = size.minDimension / 2
+            drawCircle(color = JarvisCyan.copy(alpha = 0.10f * pulse), radius = outerRadius)
+            drawCircle(
+                color = JarvisCyan.copy(alpha = 0.6f * pulse),
+                radius = outerRadius * 0.75f,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx())
+            )
+            drawCircle(
+                color = JarvisCyan.copy(alpha = 0.9f),
+                radius = outerRadius * 0.5f,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5.dp.toPx())
+            )
+            drawCircle(color = JarvisCyan.copy(alpha = 0.25f * pulse), radius = outerRadius * 0.35f)
+        }
+        Text(
+            "JARVIS",
+            color = JarvisCyan.copy(alpha = 0.85f),
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 3.sp,
+            style = MaterialTheme.typography.labelLarge
+        )
     }
 }
 

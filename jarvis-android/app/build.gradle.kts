@@ -13,6 +13,11 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "0.1.0"
+        buildConfigField(
+            "String",
+            "BUILD_SHA",
+            "\"${project.findProperty("buildSha") ?: "dev"}\""
+        )
     }
 
     buildTypes {
@@ -23,6 +28,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {

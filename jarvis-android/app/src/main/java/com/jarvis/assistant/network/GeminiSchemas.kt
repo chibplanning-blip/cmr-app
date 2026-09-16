@@ -113,5 +113,23 @@ object GeminiSchemas {
                 description = "Ouvre l'écran des réglages du mode avion. Action sensible : nécessite confirmation."
             )
         )
+        put(
+            declaration(
+                name = "set_alarm",
+                description = "Règle une alarme à une heure donnée dans l'application horloge du téléphone.",
+                properties = mapOf(
+                    "hour" to intProp("Heure entre 0 et 23"),
+                    "minute" to intProp("Minute entre 0 et 59"),
+                    "label" to stringProp("Libellé optionnel de l'alarme")
+                ),
+                required = listOf("hour", "minute")
+            )
+        )
+        put(
+            declaration(
+                name = "open_alarms_list",
+                description = "Ouvre la liste des alarmes existantes."
+            )
+        )
     }
 }

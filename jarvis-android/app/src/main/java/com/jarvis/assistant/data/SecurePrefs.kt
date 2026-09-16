@@ -3,6 +3,7 @@ package com.jarvis.assistant.data
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import org.json.JSONArray
 
 enum class AiProvider { GEMINI, CLAUDE }
 
@@ -59,6 +60,29 @@ class SecurePrefs(context: Context) {
         get() = prefs.getBoolean(KEY_ONBOARDING_COMPLETED, false)
         set(value) = prefs.edit().putBoolean(KEY_ONBOARDING_COMPLETED, value).apply()
 
+    /** Facts Jarvis has learned about the user, kept across app restarts and conversations. */
+    fun memoryFacts(): List<String> {
+        val raw = prefs.getString(KEY_MEMORY_FACTS, null) ?: return emptyList()
+        val array = JSONArray(raw)
+        return (0 until array.length()).map { array.getString(it) }
+    }
+
+    fun rememberFact(fact: String) {
+        val facts = (memoryFacts() + fact).takeLast(MAX_MEMORY_FACTS)
+        val array = JSONArray()
+        facts.forEach { array.put(it) }
+        prefs.edit().putString(KEY_MEMORY_FACTS, array.toString()).apply()
+    }
+
+    fun forgetEverything() {
+        prefs.edit().remove(KEY_MEMORY_FACTS).remove(KEY_CHAT_HISTORY).apply()
+    }
+
+    /** Chat transcript persisted as JSON [{"role": "...", "text": "..."}] so it survives an app restart. */
+    var chatHistoryJson: String?
+        get() = prefs.getString(KEY_CHAT_HISTORY, null)
+        set(value) = prefs.edit().putString(KEY_CHAT_HISTORY, value).apply()
+
     companion object {
         private const val KEY_PROVIDER = "ai_provider"
         private const val KEY_GEMINI_API_KEY = "gemini_api_key"
@@ -66,6 +90,9 @@ class SecurePrefs(context: Context) {
         private const val KEY_GEMINI_MODEL = "gemini_model"
         private const val KEY_CLAUDE_MODEL = "claude_model"
         private const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
+        private const val KEY_MEMORY_FACTS = "memory_facts"
+        private const val KEY_CHAT_HISTORY = "chat_history"
+        private const val MAX_MEMORY_FACTS = 50
 
         // Gemini 2.0 Flash is squarely in Google AI Studio's free tier (no card required).
         const val DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"

@@ -17,6 +17,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.json.JSONArray
+import org.json.JSONObject
+
+private const val MAX_PERSISTED_MESSAGES = 100
 
 class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -30,7 +34,10 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private var aiClient: AiClient? = null
     private var aiClientSignature: String? = null
 
-    private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
+    // The visible transcript survives an app restart (loaded below); Jarvis's own working
+    // memory of facts about the user (remember_fact tool) survives separately and forever -
+    // the AI conversation history itself is not replayed into a fresh AiClient on restart.
+    private val _messages = MutableStateFlow(loadPersistedMessages(securePrefs))
     val messages: StateFlow<List<ChatMessage>> = _messages
 
     private val _state = MutableStateFlow(AssistantState.IDLE)
@@ -175,8 +182,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
         if (aiClient == null || aiClientSignature != signature) {
             aiClient = when (provider) {
-                AiProvider.CLAUDE -> ClaudeClient(apiKey, model)
-                AiProvider.GEMINI -> GeminiClient(apiKey, model)
+                AiProvider.CLAUDE -> ClaudeClient(apiKey, model, securePrefs)
+                AiProvider.GEMINI -> GeminiClient(apiKey, model, securePrefs)
             }
             aiClientSignature = signature
         }
@@ -198,11 +205,47 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun appendMessage(role: ChatRole, text: String) {
-        _messages.value = _messages.value + ChatMessage(role, text)
+        val updated = (_messages.value + ChatMessage(role, text)).takeLast(MAX_PERSISTED_MESSAGES)
+        _messages.value = updated
+        persistMessages(updated)
+    }
+
+    private fun persistMessages(messages: List<ChatMessage>) {
+        val array = JSONArray()
+        messages.forEach { message ->
+            array.put(JSONObject().put("role", message.role.name).put("text", message.text))
+        }
+        securePrefs.chatHistoryJson = array.toString()
+    }
+
+    /** Erases the visible transcript and everything Jarvis has remembered - a fresh start. */
+    fun forgetEverything() {
+        securePrefs.forgetEverything()
+        _messages.value = emptyList()
+        aiClient = null
+        aiClientSignature = null
     }
 
     override fun onCleared() {
         textToSpeech.shutdown()
         super.onCleared()
+    }
+}
+
+private fun loadPersistedMessages(securePrefs: SecurePrefs): List<ChatMessage> {
+    val raw = securePrefs.chatHistoryJson ?: return emptyList()
+    return try {
+        val array = JSONArray(raw)
+        (0 until array.length()).mapNotNull { i ->
+            val obj = array.optJSONObject(i) ?: return@mapNotNull null
+            val role = try {
+                ChatRole.valueOf(obj.optString("role"))
+            } catch (e: IllegalArgumentException) {
+                ChatRole.SYSTEM
+            }
+            ChatMessage(role, obj.optString("text"))
+        }
+    } catch (e: Exception) {
+        emptyList()
     }
 }

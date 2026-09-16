@@ -1,6 +1,7 @@
 package com.jarvis.assistant.tools
 
 import android.content.Context
+import com.jarvis.assistant.data.SecurePrefs
 import org.json.JSONObject
 
 /** Tools whose effects are hard to undo or visible to other people - always confirmed with the user first. */
@@ -17,6 +18,7 @@ class ToolExecutor(context: Context) {
     private val phoneActions = PhoneActionsTool(context)
     private val phoneSettings = PhoneSettingsTool(context)
     private val alarmTool = AlarmTool(context)
+    private val securePrefs = SecurePrefs(context)
 
     suspend fun execute(
         toolName: String,
@@ -44,6 +46,10 @@ class ToolExecutor(context: Context) {
             "open_airplane_mode_settings" -> phoneSettings.openAirplaneModeSettings()
             "set_alarm" -> alarmTool.setAlarm(input.getInt("hour"), input.getInt("minute"), input.optString("label", null))
             "open_alarms_list" -> alarmTool.openAlarmsList()
+            "remember_fact" -> {
+                securePrefs.rememberFact(input.getString("fact"))
+                "Noté, je m'en souviendrai."
+            }
             else -> "Outil inconnu : $toolName"
         }
     }

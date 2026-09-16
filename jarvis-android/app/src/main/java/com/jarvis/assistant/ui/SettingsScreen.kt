@@ -144,5 +144,21 @@ fun SettingsScreen(onDone: () -> Unit) {
             Text("Vérifier les mises à jour")
         }
         updateStatus?.let { Text(it) }
+
+        Text("Mémoire :", style = MaterialTheme.typography.titleMedium)
+        Text("Jarvis retient certaines choses que tu lui dis, et garde l'historique de vos conversations.")
+        var memoryCleared by remember { mutableStateOf(false) }
+        OutlinedButton(
+            onClick = {
+                securePrefs.forgetEverything()
+                memoryCleared = true
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Effacer la mémoire et l'historique")
+        }
+        if (memoryCleared) {
+            Text("Effacé. Redémarre l'app pour repartir de zéro.")
+        }
     }
 }

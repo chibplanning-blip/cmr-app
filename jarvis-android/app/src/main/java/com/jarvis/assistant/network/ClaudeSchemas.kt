@@ -102,6 +102,12 @@ object ClaudeSchemas {
         tool(
             name = "open_alarms_list",
             description = "Ouvre la liste des alarmes existantes."
+        ),
+        tool(
+            name = "remember_fact",
+            description = "Mémorise durablement une information sur l'utilisateur (prénom, préférence, habitude...), rappelée dans les conversations suivantes même après un redémarrage de l'app.",
+            properties = mapOf("fact" to stringProp("L'information à retenir, formulée de façon concise")),
+            required = listOf("fact")
         )
     )
 }

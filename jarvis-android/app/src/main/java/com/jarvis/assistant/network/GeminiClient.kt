@@ -1,5 +1,6 @@
 package com.jarvis.assistant.network
 
+import com.jarvis.assistant.data.SecurePrefs
 import com.jarvis.assistant.tools.ToolExecutor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -18,7 +19,11 @@ private const val BASE_URL = "https://generativelanguage.googleapis.com/v1beta/m
  * Talks to the Gemini REST API. Kept as raw JSON (rather than a typed model) since there
  * is no official, actively maintained Kotlin SDK for the Gemini API.
  */
-class GeminiClient(private val apiKey: String, private val model: String) : AiClient {
+class GeminiClient(
+    private val apiKey: String,
+    private val model: String,
+    private val securePrefs: SecurePrefs
+) : AiClient {
 
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
@@ -83,7 +88,8 @@ class GeminiClient(private val apiKey: String, private val model: String) : AiCl
     private fun callGemini(history: List<JSONObject>): JSONObject {
         val requestBody = JSONObject().apply {
             put("contents", JSONArray(history))
-            put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", JARVIS_SYSTEM_PROMPT))))
+            val systemPrompt = buildJarvisSystemPrompt(securePrefs.memoryFacts())
+            put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", systemPrompt))))
             put("tools", JSONArray().put(JSONObject().put("functionDeclarations", GeminiSchemas.ALL)))
         }
 

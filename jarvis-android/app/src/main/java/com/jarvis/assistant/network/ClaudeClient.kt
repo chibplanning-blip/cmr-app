@@ -6,6 +6,7 @@ import com.anthropic.models.messages.MessageCreateParams
 import com.anthropic.models.messages.MessageParam
 import com.anthropic.models.messages.StopReason
 import com.anthropic.models.messages.ToolResultBlockParam
+import com.jarvis.assistant.data.SecurePrefs
 import com.jarvis.assistant.tools.ToolExecutor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -19,7 +20,11 @@ private const val MAX_TOKENS = 4096L
  * call the model, execute any requested tools (with confirmation for sensitive ones),
  * feed results back, repeat until the model produces a final text answer.
  */
-class ClaudeClient(apiKey: String, private val model: String) : AiClient {
+class ClaudeClient(
+    apiKey: String,
+    private val model: String,
+    private val securePrefs: SecurePrefs
+) : AiClient {
 
     private val client = AnthropicOkHttpClient.builder()
         .apiKey(apiKey)
@@ -39,7 +44,7 @@ class ClaudeClient(apiKey: String, private val model: String) : AiClient {
             val builder = MessageCreateParams.builder()
                 .model(model)
                 .maxTokens(MAX_TOKENS)
-                .system(JARVIS_SYSTEM_PROMPT)
+                .system(buildJarvisSystemPrompt(securePrefs.memoryFacts()))
                 .messages(history)
             ClaudeSchemas.ALL.forEach { builder.addTool(it) }
 

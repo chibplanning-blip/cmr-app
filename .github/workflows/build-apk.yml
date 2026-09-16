@@ -3,6 +3,9 @@ name: Build Jarvis debug APK
 on:
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -32,3 +35,14 @@ jobs:
         with:
           name: jarvis-debug-apk
           path: jarvis-android/app/build/outputs/apk/debug/*.apk
+
+      - name: Publish APK as a release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create jarvis-debug-latest \
+            app/build/outputs/apk/debug/*.apk \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Jarvis - dernier APK debug" \
+            --notes "Build automatique depuis main (${{ github.sha }})." \
+            --clobber

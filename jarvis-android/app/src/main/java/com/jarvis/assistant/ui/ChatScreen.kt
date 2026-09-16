@@ -38,6 +38,7 @@ import com.jarvis.assistant.viewmodel.AssistantState
 import com.jarvis.assistant.viewmodel.ChatRole
 import com.jarvis.assistant.viewmodel.ChatViewModel
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(onOpenSettings: () -> Unit, viewModel: ChatViewModel = viewModel()) {
     val messages by viewModel.messages.collectAsState()

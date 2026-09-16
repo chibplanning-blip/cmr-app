@@ -56,8 +56,8 @@ class PhoneSettingsTool(private val context: Context) {
                 return "Demande d'activation du Bluetooth envoyée."
             }
         }
-        openPanel(Settings.Panel.ACTION_BLUETOOTH)
-        return "Panneau Bluetooth ouvert (la désactivation programmatique n'est plus autorisée sur Android récent)."
+        openPanel(Settings.ACTION_BLUETOOTH_SETTINGS)
+        return "Écran des réglages Bluetooth ouvert (Android ne permet plus à une app de le basculer directement)."
     }
 
     fun openAirplaneModeSettings(): String {

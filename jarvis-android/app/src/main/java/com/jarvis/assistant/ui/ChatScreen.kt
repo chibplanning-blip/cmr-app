@@ -1,5 +1,13 @@
 package com.jarvis.assistant.ui
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -7,8 +15,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Settings
@@ -20,20 +31,34 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.jarvis.assistant.ui.theme.JarvisAmber
+import com.jarvis.assistant.ui.theme.JarvisCyan
+import com.jarvis.assistant.ui.theme.JarvisCyanDim
+import com.jarvis.assistant.ui.theme.JarvisPanel
+import com.jarvis.assistant.ui.theme.JarvisPanelLight
+import com.jarvis.assistant.ui.theme.JarvisRed
 import com.jarvis.assistant.viewmodel.AssistantState
 import com.jarvis.assistant.viewmodel.ChatRole
 import com.jarvis.assistant.viewmodel.ChatViewModel
@@ -45,11 +70,16 @@ fun ChatScreen(onOpenSettings: () -> Unit, viewModel: ChatViewModel = viewModel(
     val state by viewModel.state.collectAsState()
     val pendingConfirmation by viewModel.pendingConfirmation.collectAsState()
     var textInput by remember { mutableStateOf("") }
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1)
+    }
 
     pendingConfirmation?.let { confirmation ->
         AlertDialog(
             onDismissRequest = { viewModel.answerConfirmation(false) },
-            title = { Text("Confirmation requise") },
+            title = { Text("CONFIRMATION REQUISE", letterSpacing = 1.sp) },
             text = { Text(confirmation.message) },
             confirmButton = {
                 TextButton(onClick = { viewModel.answerConfirmation(true) }) { Text("Confirmer") }
@@ -63,62 +93,79 @@ fun ChatScreen(onOpenSettings: () -> Unit, viewModel: ChatViewModel = viewModel(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Jarvis") },
+                title = {
+                    Text(
+                        "JARVIS",
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 4.sp,
+                        color = JarvisCyan
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = JarvisPanel),
                 actions = {
                     IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Filled.Settings, contentDescription = "Paramètres")
+                        Icon(Icons.Filled.Settings, contentDescription = "Paramètres", tint = JarvisCyan)
                     }
                 }
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { viewModel.startListening() },
-                containerColor = if (state == AssistantState.LISTENING) Color.Red else MaterialTheme.colorScheme.primary
-            ) {
-                Icon(Icons.Filled.Mic, contentDescription = "Parler")
-            }
-        }
+        floatingActionButton = { MicButton(state = state, onClick = { viewModel.startListening() }) }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             LazyColumn(
-                modifier = Modifier.fillMaxSize().weight(1f).padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                state = listState,
+                modifier = Modifier.fillMaxSize().weight(1f).padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(messages) { message ->
-                    val alignment = if (message.role == ChatRole.USER) Arrangement.End else Arrangement.Start
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = alignment) {
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = when (message.role) {
-                                    ChatRole.USER -> MaterialTheme.colorScheme.primaryContainer
-                                    ChatRole.ASSISTANT -> MaterialTheme.colorScheme.secondaryContainer
-                                    ChatRole.SYSTEM -> MaterialTheme.colorScheme.errorContainer
-                                }
-                            )
-                        ) {
-                            Text(message.text, modifier = Modifier.padding(12.dp))
-                        }
-                    }
+                    MessageBubble(role = message.role, text = message.text)
                 }
             }
 
             StatusLabel(state)
 
-            Row(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
                 OutlinedTextField(
                     value = textInput,
                     onValueChange = { textInput = it },
                     label = { Text("Écrire à Jarvis...") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = JarvisCyan,
+                        unfocusedBorderColor = JarvisCyanDim,
+                        focusedTextColor = JarvisCyan,
+                        unfocusedTextColor = JarvisCyan
+                    )
                 )
                 IconButton(onClick = {
                     viewModel.sendTypedText(textInput)
                     textInput = ""
                 }) {
-                    Text("Envoyer")
+                    Text("➤", color = JarvisCyan, style = MaterialTheme.typography.titleLarge)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun MessageBubble(role: ChatRole, text: String) {
+    val alignment = if (role == ChatRole.USER) Arrangement.End else Arrangement.Start
+    val (containerColor, borderColor, textColor) = when (role) {
+        ChatRole.USER -> Triple(JarvisCyanDim, JarvisCyan, JarvisCyan)
+        ChatRole.ASSISTANT -> Triple(JarvisPanelLight, JarvisCyanDim, JarvisCyan)
+        ChatRole.SYSTEM -> Triple(Color(0xFF3A1414), JarvisRed, JarvisRed)
+    }
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = alignment) {
+        Card(
+            shape = RoundedCornerShape(14.dp),
+            border = BorderStroke(1.dp, borderColor),
+            colors = CardDefaults.cardColors(containerColor = containerColor)
+        ) {
+            Text(text, color = textColor, modifier = Modifier.padding(12.dp))
         }
     }
 }
@@ -127,13 +174,67 @@ fun ChatScreen(onOpenSettings: () -> Unit, viewModel: ChatViewModel = viewModel(
 private fun StatusLabel(state: AssistantState) {
     val label = when (state) {
         AssistantState.IDLE -> null
-        AssistantState.LISTENING -> "Jarvis écoute..."
-        AssistantState.THINKING -> "Jarvis réfléchit..."
-        AssistantState.SPEAKING -> "Jarvis répond..."
+        AssistantState.LISTENING -> "◉ JARVIS ÉCOUTE..."
+        AssistantState.THINKING -> "◐ JARVIS RÉFLÉCHIT..."
+        AssistantState.SPEAKING -> "▶ JARVIS RÉPOND..."
     }
     if (label != null) {
-        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-            Text(label, style = MaterialTheme.typography.labelMedium)
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
+            Text(
+                label,
+                color = JarvisAmber,
+                fontFamily = FontFamily.Monospace,
+                letterSpacing = 1.5.sp,
+                style = MaterialTheme.typography.labelMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+private fun MicButton(state: AssistantState, onClick: () -> Unit) {
+    val active = state != AssistantState.IDLE
+    val glowColor = when (state) {
+        AssistantState.LISTENING -> JarvisRed
+        AssistantState.THINKING -> JarvisAmber
+        else -> JarvisCyan
+    }
+
+    val transition = rememberInfiniteTransition(label = "mic-pulse")
+    val pulse by transition.animateFloat(
+        initialValue = 0.35f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 900, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse"
+    )
+
+    Box(
+        modifier = Modifier.size(84.dp),
+        contentAlignment = androidx.compose.ui.Alignment.Center
+    ) {
+        if (active) {
+            Canvas(modifier = Modifier.size(84.dp)) {
+                drawCircle(color = glowColor.copy(alpha = pulse * 0.35f), radius = size.minDimension / 2)
+            }
+        }
+        FloatingActionButton(
+            onClick = onClick,
+            containerColor = if (active) glowColor else JarvisPanelLight,
+            contentColor = if (active) JarvisPanel else JarvisCyan,
+            modifier = Modifier
+                .size(64.dp)
+                .drawBehind {
+                    if (active) {
+                        drawCircle(color = glowColor.copy(alpha = 0.5f), radius = size.minDimension / 2 + 6f)
+                    }
+                }
+        ) {
+            Icon(Icons.Filled.Mic, contentDescription = "Parler")
         }
     }
 }

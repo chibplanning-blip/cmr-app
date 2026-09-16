@@ -37,6 +37,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     private var pendingConfirmationAnswer: CompletableDeferred<Boolean>? = null
     private var listeningJob: Job? = null
+    private var replyJob: Job? = null
 
     // True while the current exchange was started by voice - once true, Jarvis keeps
     // listening again automatically after each reply instead of waiting for another tap,
@@ -47,12 +48,25 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     fun hasApiKey(): Boolean = securePrefs.hasApiKey
 
+    /** Cancels whatever Jarvis is currently doing (thinking, speaking, listening) and resets. */
+    fun cancelCurrent() {
+        listeningJob?.cancel()
+        listeningJob = null
+        replyJob?.cancel()
+        replyJob = null
+        pendingConfirmationAnswer?.complete(false)
+        pendingConfirmationAnswer = null
+        _pendingConfirmation.value = null
+        conversationModeActive = false
+        textToSpeech.stop()
+        _state.value = AssistantState.IDLE
+    }
+
     fun startListening() {
-        if (_state.value == AssistantState.LISTENING) {
-            stopListening()
+        if (_state.value != AssistantState.IDLE) {
+            cancelCurrent()
             return
         }
-        if (_state.value != AssistantState.IDLE) return
 
         conversationModeActive = true
         _state.value = AssistantState.LISTENING
@@ -75,13 +89,6 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
-    }
-
-    fun stopListening() {
-        listeningJob?.cancel()
-        listeningJob = null
-        conversationModeActive = false
-        _state.value = AssistantState.IDLE
     }
 
     /** Called from the text input - a typed message always breaks conversation mode. */
@@ -111,7 +118,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         _state.value = AssistantState.THINKING
-        viewModelScope.launch {
+        replyJob = viewModelScope.launch {
             val client = GeminiClient(apiKey, securePrefs.model)
             val reply = try {
                 client.sendAndResolve(history, toolExecutor) { confirmationMessage ->

@@ -42,6 +42,10 @@ class TextToSpeechManager(context: Context) {
         }
     }
 
+    fun stop() {
+        tts.stop()
+    }
+
     fun shutdown() {
         tts.stop()
         tts.shutdown()

@@ -78,21 +78,41 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         listeningJob = viewModelScope.launch {
             speechToText.listen().collect { event ->
                 when (event) {
-                    is SpeechEvent.FinalResult -> sendUserText(event.text)
+                    is SpeechEvent.FinalResult -> {
+                        val heard = event.text.trim()
+                        if (isStopWord(heard)) {
+                            cancelCurrent()
+                        } else {
+                            sendUserText(heard)
+                        }
+                    }
                     is SpeechEvent.Error -> {
                         appendMessage(ChatRole.SYSTEM, event.message)
                         conversationModeActive = false
                         _state.value = AssistantState.IDLE
                     }
                     is SpeechEvent.Done -> if (_state.value == AssistantState.LISTENING) {
-                        // Silence with nothing recognised: end the conversation loop quietly.
-                        conversationModeActive = false
-                        _state.value = AssistantState.IDLE
+                        if (conversationModeActive) {
+                            // Continuous hands-free mode: silence just means listen again,
+                            // not the end of the conversation - only "stop" or an error does.
+                            _state.value = AssistantState.IDLE
+                            startListening()
+                        } else {
+                            _state.value = AssistantState.IDLE
+                        }
                     }
                     else -> Unit
                 }
             }
         }
+    }
+
+    /** Starts hands-free mode: Jarvis listens continuously until you say "stop". */
+    fun startHandsFree() = startListening()
+
+    private fun isStopWord(text: String): Boolean {
+        val normalized = text.trim().trimEnd('.', '!', '?').lowercase()
+        return normalized == "stop" || normalized == "stoppe" || normalized == "arrête" || normalized == "arrête-toi"
     }
 
     /** Called from the text input - a typed message always breaks conversation mode. */

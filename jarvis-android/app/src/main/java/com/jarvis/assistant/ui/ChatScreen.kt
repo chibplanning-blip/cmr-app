@@ -77,6 +77,12 @@ fun ChatScreen(onOpenSettings: () -> Unit, viewModel: ChatViewModel = viewModel(
         if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1)
     }
 
+    // Hands-free by default: start listening as soon as the screen opens, without needing
+    // a tap. Say "stop" to end the conversation loop; tapping the mic still works too.
+    LaunchedEffect(Unit) {
+        if (viewModel.state.value == AssistantState.IDLE) viewModel.startHandsFree()
+    }
+
     pendingConfirmation?.let { confirmation ->
         AlertDialog(
             onDismissRequest = { viewModel.answerConfirmation(false) },

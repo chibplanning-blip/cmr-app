@@ -59,6 +59,7 @@ import com.jarvis.assistant.ui.theme.JarvisCyanDim
 import com.jarvis.assistant.ui.theme.JarvisPanel
 import com.jarvis.assistant.ui.theme.JarvisPanelLight
 import com.jarvis.assistant.ui.theme.JarvisRed
+import com.jarvis.assistant.ui.theme.JarvisText
 import com.jarvis.assistant.viewmodel.AssistantState
 import com.jarvis.assistant.viewmodel.ChatRole
 import com.jarvis.assistant.viewmodel.ChatViewModel
@@ -136,8 +137,11 @@ fun ChatScreen(onOpenSettings: () -> Unit, viewModel: ChatViewModel = viewModel(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = JarvisCyan,
                         unfocusedBorderColor = JarvisCyanDim,
-                        focusedTextColor = JarvisCyan,
-                        unfocusedTextColor = JarvisCyan
+                        focusedTextColor = JarvisText,
+                        unfocusedTextColor = JarvisText,
+                        cursorColor = JarvisCyan,
+                        focusedLabelColor = JarvisCyan,
+                        unfocusedLabelColor = JarvisText
                     )
                 )
                 IconButton(onClick = {
@@ -155,9 +159,9 @@ fun ChatScreen(onOpenSettings: () -> Unit, viewModel: ChatViewModel = viewModel(
 private fun MessageBubble(role: ChatRole, text: String) {
     val alignment = if (role == ChatRole.USER) Arrangement.End else Arrangement.Start
     val (containerColor, borderColor, textColor) = when (role) {
-        ChatRole.USER -> Triple(JarvisCyanDim, JarvisCyan, JarvisCyan)
-        ChatRole.ASSISTANT -> Triple(JarvisPanelLight, JarvisCyanDim, JarvisCyan)
-        ChatRole.SYSTEM -> Triple(Color(0xFF3A1414), JarvisRed, JarvisRed)
+        ChatRole.USER -> Triple(JarvisCyanDim, JarvisCyan, JarvisText)
+        ChatRole.ASSISTANT -> Triple(JarvisPanelLight, JarvisCyanDim, JarvisText)
+        ChatRole.SYSTEM -> Triple(Color(0xFF4A1A1A), JarvisRed, JarvisText)
     }
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = alignment) {
         Card(

@@ -6,14 +6,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 // A HUD/arc-reactor palette - always dark, never follows system light mode:
-// the whole point of Jarvis is to feel like a glowing cockpit readout.
-val JarvisVoid = Color(0xFF05080B)
-val JarvisPanel = Color(0xFF0D1620)
-val JarvisPanelLight = Color(0xFF152230)
-val JarvisCyan = Color(0xFF31E8FF)
-val JarvisCyanDim = Color(0xFF14495A)
-val JarvisAmber = Color(0xFFFFB347)
-val JarvisRed = Color(0xFFFF5C5C)
+// the whole point of Jarvis is to feel like a glowing cockpit readout. Body text uses a
+// bright near-white (JarvisText), not the saturated accent cyan - a fully saturated color
+// used for every line of text reads as too dark/low-contrast at normal font sizes.
+val JarvisVoid = Color(0xFF0A0F14)
+val JarvisPanel = Color(0xFF16222E)
+val JarvisPanelLight = Color(0xFF203040)
+val JarvisCyan = Color(0xFF4DEBFF)
+val JarvisCyanDim = Color(0xFF2E6E82)
+val JarvisAmber = Color(0xFFFFC46B)
+val JarvisRed = Color(0xFFFF6B6B)
+val JarvisText = Color(0xFFF2FBFF)
 
 private val JarvisColors = darkColorScheme(
     primary = JarvisCyan,
@@ -21,18 +24,18 @@ private val JarvisColors = darkColorScheme(
     secondary = JarvisAmber,
     onSecondary = JarvisVoid,
     background = JarvisVoid,
-    onBackground = JarvisCyan,
+    onBackground = JarvisText,
     surface = JarvisPanel,
-    onSurface = JarvisCyan,
+    onSurface = JarvisText,
     surfaceVariant = JarvisPanelLight,
-    onSurfaceVariant = JarvisCyan,
+    onSurfaceVariant = JarvisText,
     primaryContainer = JarvisCyanDim,
-    onPrimaryContainer = JarvisCyan,
+    onPrimaryContainer = JarvisText,
     secondaryContainer = JarvisPanelLight,
     onSecondaryContainer = JarvisAmber,
-    errorContainer = Color(0xFF3A1414),
+    errorContainer = Color(0xFF4A1A1A),
     onErrorContainer = JarvisRed,
-    outline = JarvisCyanDim
+    outline = JarvisCyan
 )
 
 @Composable

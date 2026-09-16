@@ -60,8 +60,10 @@ dependencies {
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
-    // Google Gemini API (free tier) - the "brain" of Jarvis, called over plain REST/JSON
+    // Two interchangeable "brains" for Jarvis, chosen in Settings:
+    // Google Gemini (free tier) over plain REST/JSON, and the official Anthropic Java SDK.
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.anthropic:anthropic-java:2.63.0")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 }

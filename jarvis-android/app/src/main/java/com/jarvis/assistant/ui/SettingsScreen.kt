@@ -36,13 +36,14 @@ fun SettingsScreen(onDone: () -> Unit) {
         Text("Paramètres", style = MaterialTheme.typography.headlineMedium)
 
         Text(
-            "Clé API Anthropic (console.anthropic.com). Elle est stockée chiffrée sur ton " +
-                "téléphone et n'est jamais envoyée ailleurs qu'à l'API Claude."
+            "Clé API Google AI, gratuite (aistudio.google.com/apikey, aucune carte requise). " +
+                "Elle est stockée chiffrée sur ton téléphone et n'est jamais envoyée ailleurs " +
+                "qu'à l'API Gemini."
         )
         OutlinedTextField(
             value = apiKey,
             onValueChange = { apiKey = it },
-            label = { Text("sk-ant-...") },
+            label = { Text("AIza...") },
             modifier = Modifier.fillMaxWidth()
         )
 

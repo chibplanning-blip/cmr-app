@@ -7,7 +7,7 @@ import org.json.JSONObject
 val SENSITIVE_TOOLS = setOf("call_contact", "send_sms", "toggle_bluetooth", "open_airplane_mode_settings")
 
 /**
- * Dispatches a tool_use call from Claude to the matching Android action.
+ * Dispatches a function call from Gemini to the matching Android action.
  * [confirm] is suspended until the user answers a confirmation dialog for sensitive tools;
  * it is not called at all for safe, read-only or easily-reversible tools.
  */

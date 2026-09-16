@@ -5,7 +5,7 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 
 /**
- * Encrypted storage for the Anthropic API key and the chosen model.
+ * Encrypted storage for the Google AI (Gemini) API key and the chosen model.
  * Never store the key in plain SharedPreferences or log it.
  */
 class SecurePrefs(context: Context) {
@@ -32,19 +32,24 @@ class SecurePrefs(context: Context) {
 
     val hasApiKey: Boolean get() = !apiKey.isNullOrBlank()
 
-    companion object {
-        private const val KEY_API_KEY = "anthropic_api_key"
-        private const val KEY_MODEL = "selected_model"
+    var onboardingCompleted: Boolean
+        get() = prefs.getBoolean(KEY_ONBOARDING_COMPLETED, false)
+        set(value) = prefs.edit().putBoolean(KEY_ONBOARDING_COMPLETED, value).apply()
 
-        // Anthropic's most capable current model. Configurable in Settings
-        // since a voice assistant used many times a day racks up real cost -
-        // Sonnet 5 / Haiku 4.5 are cheaper alternatives.
-        const val DEFAULT_MODEL = "claude-opus-5"
+    companion object {
+        private const val KEY_API_KEY = "gemini_api_key"
+        private const val KEY_MODEL = "selected_model"
+        private const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
+
+        // Gemini 2.0 Flash is squarely in Google AI Studio's free tier (no card required).
+        // "gemini-flash-latest" always points at the newest Flash model if you want to
+        // follow updates automatically instead of pinning a version.
+        const val DEFAULT_MODEL = "gemini-2.0-flash"
 
         val AVAILABLE_MODELS = listOf(
-            "claude-opus-5" to "Claude Opus 5 — le plus capable (par défaut)",
-            "claude-sonnet-5" to "Claude Sonnet 5 — bon compromis coût/qualité",
-            "claude-haiku-4-5" to "Claude Haiku 4.5 — le moins cher, plus rapide"
+            "gemini-2.0-flash" to "Gemini 2.0 Flash — gratuit, rapide (par défaut)",
+            "gemini-flash-latest" to "Gemini Flash (dernière version) — suit les mises à jour de Google",
+            "gemini-2.5-flash" to "Gemini 2.5 Flash — plus capable, toujours gratuit dans la limite du forfait"
         )
     }
 }

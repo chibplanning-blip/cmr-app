@@ -3,9 +3,8 @@ package com.jarvis.assistant.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.anthropic.models.messages.MessageParam
 import com.jarvis.assistant.data.SecurePrefs
-import com.jarvis.assistant.network.ClaudeClient
+import com.jarvis.assistant.network.GeminiClient
 import com.jarvis.assistant.tools.ToolExecutor
 import com.jarvis.assistant.voice.SpeechEvent
 import com.jarvis.assistant.voice.SpeechToTextManager
@@ -15,6 +14,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.json.JSONArray
+import org.json.JSONObject
 
 class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -23,7 +24,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private val speechToText = SpeechToTextManager(application)
     private val textToSpeech = TextToSpeechManager(application)
 
-    private val history = mutableListOf<MessageParam>()
+    private val history = mutableListOf<JSONObject>()
 
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
     val messages: StateFlow<List<ChatMessage>> = _messages
@@ -92,13 +93,17 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     fun sendUserText(text: String) {
         if (text.isBlank()) return
         appendMessage(ChatRole.USER, text)
-        history.add(MessageParam.builder().role(MessageParam.Role.USER).content(text).build())
+        history.add(
+            JSONObject()
+                .put("role", "user")
+                .put("parts", JSONArray().put(JSONObject().put("text", text)))
+        )
 
         val apiKey = securePrefs.apiKey
         if (apiKey.isNullOrBlank()) {
             appendMessage(
                 ChatRole.SYSTEM,
-                "Aucune clé API Anthropic configurée. Ouvre les paramètres pour en ajouter une."
+                "Aucune clé API Google AI configurée. Ouvre les paramètres pour en ajouter une."
             )
             conversationModeActive = false
             _state.value = AssistantState.IDLE
@@ -107,13 +112,13 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
         _state.value = AssistantState.THINKING
         viewModelScope.launch {
-            val client = ClaudeClient(apiKey, securePrefs.model)
+            val client = GeminiClient(apiKey, securePrefs.model)
             val reply = try {
                 client.sendAndResolve(history, toolExecutor) { confirmationMessage ->
                     askUserToConfirm(confirmationMessage)
                 }
             } catch (e: Exception) {
-                "Erreur en contactant Claude : ${e.message}"
+                "Erreur en contactant Gemini : ${e.message}"
             }
 
             appendMessage(ChatRole.ASSISTANT, reply)

@@ -23,7 +23,7 @@ class ClaudeClient(apiKey: String, private val model: String) : AiClient {
 
     private val client = AnthropicOkHttpClient.builder()
         .apiKey(apiKey)
-        .timeout(45, TimeUnit.SECONDS)
+        .timeout(Duration.ofSeconds(45))
         .build()
 
     private val history = mutableListOf<MessageParam>()

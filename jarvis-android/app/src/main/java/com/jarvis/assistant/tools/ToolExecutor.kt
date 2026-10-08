@@ -2,10 +2,13 @@ package com.jarvis.assistant.tools
 
 import android.content.Context
 import com.jarvis.assistant.data.SecurePrefs
+import com.jarvis.assistant.network.PcAgentClient
 import org.json.JSONObject
 
 /** Tools whose effects are hard to undo or visible to other people - always confirmed with the user first. */
-val SENSITIVE_TOOLS = setOf("call_contact", "send_sms", "toggle_bluetooth", "open_airplane_mode_settings")
+val SENSITIVE_TOOLS = setOf(
+    "call_contact", "send_sms", "toggle_bluetooth", "open_airplane_mode_settings", "pc_run_command"
+)
 
 /**
  * Dispatches a function call from Gemini to the matching Android action.
@@ -19,6 +22,7 @@ class ToolExecutor(context: Context) {
     private val phoneSettings = PhoneSettingsTool(context)
     private val alarmTool = AlarmTool(context)
     private val securePrefs = SecurePrefs(context)
+    private val pcAgentClient = PcAgentClient(securePrefs)
 
     suspend fun execute(
         toolName: String,
@@ -50,6 +54,10 @@ class ToolExecutor(context: Context) {
                 securePrefs.rememberFact(input.getString("fact"))
                 "Noté, je m'en souviendrai."
             }
+            "pc_run_command" -> pcAgentClient.runCommand(input.getString("command"))
+            "pc_read_file" -> pcAgentClient.readFile(input.getString("path"))
+            "pc_list_files" -> pcAgentClient.listFiles(input.optString("path").ifBlank { null })
+            "pc_open_path" -> pcAgentClient.openPath(input.getString("path"))
             else -> "Outil inconnu : $toolName"
         }
     }
@@ -59,6 +67,7 @@ class ToolExecutor(context: Context) {
         "send_sms" -> "Jarvis veut envoyer le SMS « ${input.optString("message")} » à « ${input.optString("name_or_number")} ». Confirmer ?"
         "toggle_bluetooth" -> "Jarvis veut activer le Bluetooth. Confirmer ?"
         "open_airplane_mode_settings" -> "Jarvis veut ouvrir les réglages du mode avion. Confirmer ?"
+        "pc_run_command" -> "Jarvis veut exécuter cette commande sur ton ordinateur : « ${input.optString("command")} ». Confirmer ?"
         else -> "Jarvis veut exécuter « $toolName ». Confirmer ?"
     }
 }

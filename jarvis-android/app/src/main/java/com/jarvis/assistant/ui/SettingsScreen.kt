@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.jarvis.assistant.data.AiProvider
 import com.jarvis.assistant.data.SecurePrefs
 import com.jarvis.assistant.data.UpdateChecker
+import com.jarvis.assistant.network.PcAgentClient
 import kotlinx.coroutines.launch
 
 @Composable
@@ -41,6 +42,9 @@ fun SettingsScreen(onDone: () -> Unit) {
     var geminiModel by remember { mutableStateOf(securePrefs.geminiModel) }
     var claudeModel by remember { mutableStateOf(securePrefs.claudeModel) }
     var updateStatus by remember { mutableStateOf<String?>(null) }
+    var pcAgentUrl by remember { mutableStateOf(securePrefs.pcAgentUrl.orEmpty()) }
+    var pcAgentToken by remember { mutableStateOf(securePrefs.pcAgentToken.orEmpty()) }
+    var pcAgentTestStatus by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
@@ -113,12 +117,51 @@ fun SettingsScreen(onDone: () -> Unit) {
                 securePrefs.claudeApiKey = claudeKey.trim()
                 securePrefs.geminiModel = geminiModel
                 securePrefs.claudeModel = claudeModel
+                securePrefs.pcAgentUrl = pcAgentUrl
+                securePrefs.pcAgentToken = pcAgentToken
                 onDone()
             },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Enregistrer")
         }
+
+        Text("Contrôle du PC :", style = MaterialTheme.typography.titleMedium)
+        Text(
+            "Adresse et jeton du script jarvis_pc_agent.py lancé sur ton ordinateur " +
+                "(voir /pc-agent dans le dépôt). Même réseau Wi-Fi, ou adresse Tailscale " +
+                "pour un accès à distance."
+        )
+        OutlinedTextField(
+            value = pcAgentUrl,
+            onValueChange = { pcAgentUrl = it },
+            label = { Text("Adresse, ex: http://192.168.1.42:8765") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = pcAgentToken,
+            onValueChange = { pcAgentToken = it },
+            label = { Text("Jeton d'appairage") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedButton(
+            onClick = {
+                securePrefs.pcAgentUrl = pcAgentUrl
+                securePrefs.pcAgentToken = pcAgentToken
+                pcAgentTestStatus = "Connexion..."
+                coroutineScope.launch {
+                    pcAgentTestStatus = try {
+                        PcAgentClient(securePrefs).ping()
+                    } catch (e: Exception) {
+                        "Échec : ${e.message}"
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Tester la connexion au PC")
+        }
+        pcAgentTestStatus?.let { Text(it) }
 
         Text("Mises à jour :", style = MaterialTheme.typography.titleMedium)
         OutlinedButton(

@@ -14,6 +14,11 @@ Quand l'utilisateur te confie une information durable sur lui (son prénom, ses 
 ses habitudes, des détails personnels utiles à retenir), utilise l'outil remember_fact pour la
 mémoriser - elle te sera rappelée dans les conversations suivantes, même après un redémarrage
 de l'application.
+Tu as aussi accès à l'ordinateur de l'utilisateur via les outils pc_run_command, pc_read_file,
+pc_list_files et pc_open_path, s'il a configuré et connecté son agent PC. Si l'un de ces outils
+répond que l'agent PC n'est pas configuré ou injoignable, dis-le simplement à l'utilisateur au
+lieu de réessayer en boucle. pc_run_command exécute une vraie commande sur sa machine et sera
+toujours soumis à confirmation avant de s'exécuter.
 """
 
 /** Builds the full system prompt, folding in whatever Jarvis has remembered about the user so far. */

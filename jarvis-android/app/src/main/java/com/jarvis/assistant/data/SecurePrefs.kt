@@ -83,6 +83,18 @@ class SecurePrefs(context: Context) {
         get() = prefs.getString(KEY_CHAT_HISTORY, null)
         set(value) = prefs.edit().putString(KEY_CHAT_HISTORY, value).apply()
 
+    /** Base URL of the Jarvis PC agent, e.g. "http://192.168.1.42:8765" or a Tailscale address. */
+    var pcAgentUrl: String?
+        get() = prefs.getString(KEY_PC_AGENT_URL, null)
+        set(value) = prefs.edit().putString(KEY_PC_AGENT_URL, value?.trim()?.trimEnd('/')).apply()
+
+    /** Pairing token printed by jarvis_pc_agent.py on first run. */
+    var pcAgentToken: String?
+        get() = prefs.getString(KEY_PC_AGENT_TOKEN, null)
+        set(value) = prefs.edit().putString(KEY_PC_AGENT_TOKEN, value?.trim()).apply()
+
+    val pcAgentConfigured: Boolean get() = !pcAgentUrl.isNullOrBlank() && !pcAgentToken.isNullOrBlank()
+
     companion object {
         private const val KEY_PROVIDER = "ai_provider"
         private const val KEY_GEMINI_API_KEY = "gemini_api_key"
@@ -92,6 +104,8 @@ class SecurePrefs(context: Context) {
         private const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
         private const val KEY_MEMORY_FACTS = "memory_facts"
         private const val KEY_CHAT_HISTORY = "chat_history"
+        private const val KEY_PC_AGENT_URL = "pc_agent_url"
+        private const val KEY_PC_AGENT_TOKEN = "pc_agent_token"
         private const val MAX_MEMORY_FACTS = 50
 
         // Gemini 2.0 Flash is squarely in Google AI Studio's free tier (no card required).

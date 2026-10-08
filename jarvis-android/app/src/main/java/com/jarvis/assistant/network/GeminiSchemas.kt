@@ -139,5 +139,36 @@ object GeminiSchemas {
                 required = listOf("fact")
             )
         )
+        put(
+            declaration(
+                name = "pc_run_command",
+                description = "Exécute une commande shell sur l'ordinateur de l'utilisateur, via l'agent PC. Action sensible : nécessite confirmation de l'utilisateur.",
+                properties = mapOf("command" to stringProp("Commande shell à exécuter")),
+                required = listOf("command")
+            )
+        )
+        put(
+            declaration(
+                name = "pc_read_file",
+                description = "Lit le contenu d'un fichier texte sur l'ordinateur de l'utilisateur, via l'agent PC.",
+                properties = mapOf("path" to stringProp("Chemin absolu du fichier à lire")),
+                required = listOf("path")
+            )
+        )
+        put(
+            declaration(
+                name = "pc_list_files",
+                description = "Liste le contenu d'un dossier sur l'ordinateur de l'utilisateur, via l'agent PC.",
+                properties = mapOf("path" to stringProp("Chemin absolu du dossier (dossier utilisateur par défaut si omis)"))
+            )
+        )
+        put(
+            declaration(
+                name = "pc_open_path",
+                description = "Ouvre un fichier, une application ou un lien sur l'ordinateur de l'utilisateur avec le programme par défaut, via l'agent PC.",
+                properties = mapOf("path" to stringProp("Chemin du fichier/app ou URL à ouvrir")),
+                required = listOf("path")
+            )
+        )
     }
 }

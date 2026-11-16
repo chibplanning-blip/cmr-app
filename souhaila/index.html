@@ -29,10 +29,15 @@ footer{background:var(--d);color:#fff;text-align:center;padding:24px}
 <div class="card"><h3>2. On collecte</h3>Nous passons chez vous au créneau choisi.</div>
 <div class="card"><h3>3. On livre</h3>Linge propre, plié ou sur cintre, sous 48 h.</div></div></section></div>
 
-<section id="tarifs" class="hide"><h2>Nos tarifs</h2><table id="tbl"></table>
-<p>Collecte et livraison : <b>3 € / commande</b>, offertes dès 30 €.</p></section>
+<section id="tarifs" class="hide"><h2>Nos tarifs – particuliers</h2><table id="tbl"></table>
+<h2>Professionnels</h2><div class="grid">
+<div class="card"><h3>🍽 Restaurants &amp; hôtels</h3>Nappes, serviettes, torchons, tabliers, draps, serviettes de bain. Tournées 2–3×/semaine.</div>
+<div class="card"><h3>🏥 Maisons de repos, hôpitaux, cliniques</h3>Draps, alèses, blouses, linge de résidents (marquage nominatif). Lavage thermique/désinfectant, circuits propre/sale séparés, traçabilité.</div>
+<div class="card"><h3>🏢 Sociétés</h3>Tenues de travail, serviettes, linge de salle de pause. Abonnement mensuel.</div></div>
+<p>Tarifs pro dégressifs selon le volume (à partir de ~2,20 €/kg) – <b>sur devis</b> : créez un compte professionnel puis demandez un devis dans « Commander ».</p>
+<p>Collecte et livraison particuliers : <b>3 € / commande</b>, offertes dès 30 €.</p></section>
 
-<section id="commande" class="hide"><h2>Passer commande</h2>
+<section id="commande" class="hide"><h2>Passer commande</h2><div id="proBox" class="box hide" style="margin-bottom:16px"><h3>Compte professionnel – demande de devis</h3><label>Volume estimé (kg / semaine)<input type="number" id="vol" min="0"></label><label>Fréquence de passage<select id="freq"><option>1×/semaine</option><option>2×/semaine</option><option>3×/semaine</option><option>Tous les jours</option></select></label><label>Précisions (types de linge, normes sanitaires…)<input id="det"></label><button class="btn" onclick="devis()">Envoyer la demande de devis</button><p id="dmsg" class="ok"></p></div>
 <div class="box"><div id="needLogin" class="msg hide">Connectez-vous ou créez un compte pour commander.</div>
 <div id="orderForm"><div id="lines"></div>
 <label>Adresse de collecte<input id="addr" placeholder="12 rue des Lilas, 75000 Paris"></label>
@@ -44,6 +49,7 @@ footer{background:var(--d);color:#fff;text-align:center;padding:24px}
 
 <section id="compte" class="hide"><h2>Mon compte</h2>
 <div id="auth" class="box"><label>Prénom (inscription)<input id="nom"></label>
+<label>Type de compte<select id="type"><option value="particulier">Particulier</option><option value="restaurant">Restaurant / hôtel</option><option value="sante">Maison de repos / hôpital / clinique</option><option value="societe">Société (vêtements de travail)</option></select></label>
 <label>Email<input id="mail" type="email"></label><label>Mot de passe (8 caractères min.)<input id="pw" type="password"></label>
 <button class="btn" onclick="signup()">Créer mon compte</button> <button class="btn" style="background:#ddd" onclick="login()">Se connecter</button><p id="amsg" class="msg"></p></div>
 <div id="me" class="box hide"><h3 id="hi"></h3><button class="btn" style="background:#ddd" onclick="logout()">Déconnexion</button><h3>Mes commandes</h3><div id="hist"></div></div></section>
@@ -59,7 +65,7 @@ $("lines").innerHTML=S.map((s,i)=>`<label>${s[0]} – ${eur(s[1])} €/${s[2]}<i
 function calc(){let t=0;S.forEach((s,i)=>t+=s[1]*(+$("q"+i).value||0));const l=t>0&&t<30?3:0;$("sub").textContent=eur(t);$("liv").textContent=eur(l);$("tot").textContent=eur(t+l);return[t,l]}
 async function h(p){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(p));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
 async function signup(){const m=$("mail").value.trim().toLowerCase(),p=$("pw").value;if(!/^\S+@\S+\.\S+$/.test(m)||p.length<8||!$("nom").value)return $("amsg").textContent="Prénom, email valide et mot de passe de 8 caractères minimum requis.";
-const u=L("users")||{};if(u[m])return $("amsg").textContent="Cet email a déjà un compte.";u[m]={nom:$("nom").value,hash:await h(p)};W("users",u);W("session",m);$("amsg").textContent="";ui()}
+const u=L("users")||{};if(u[m])return $("amsg").textContent="Cet email a déjà un compte.";u[m]={type:$("type").value,nom:$("nom").value,hash:await h(p)};W("users",u);W("session",m);$("amsg").textContent="";ui()}
 async function login(){const m=$("mail").value.trim().toLowerCase(),u=(L("users")||{})[m];if(!u||u.hash!==await h($("pw").value))return $("amsg").textContent="Email ou mot de passe incorrect.";W("session",m);$("amsg").textContent="";ui()}
 function logout(){localStorage.removeItem("session");ui()}
 function ui(){const m=L("session"),u=m&&(L("users")||{})[m];$("auth").classList.toggle("hide",!!u);$("me").classList.toggle("hide",!u);$("navCompte").textContent=u?"👤 "+u.nom:"Connexion";
@@ -67,7 +73,8 @@ if(u){$("hi").textContent="Bonjour "+u.nom;const o=(L("orders")||[]).filter(x=>x
 const ETAPES=["En attente de collecte","Lavage terminé ✔","Séchage terminé ✔","Repassage terminé ✔","Livrée"];
 function cycle(i){const o=L("orders");const n=ETAPES.indexOf(o[i].st);o[i].st=ETAPES[Math.min(n+1,ETAPES.length-1)];W("orders",o);
 if(window.Notification&&Notification.permission=="granted")new Notification("Fraîcheur & Co",{body:"Commande : "+o[i].st});else if(window.Notification)Notification.requestPermission();ui()}
-function chk(){const ok=!!L("session");$("needLogin").classList.toggle("hide",ok);$("orderForm").classList.toggle("hide",!ok)}
+function devis(){if(!(+$("vol").value>0))return $("dmsg").textContent="Indiquez un volume.";const d=L("devis")||[];d.push({m:L("session"),v:$("vol").value,f:$("freq").value,t:$("det").value});W("devis",d);$("dmsg").textContent="Demande envoyée ✔ – nous vous répondons sous 24 h."}
+function chk(){const ok=!!L("session");const u=(L("users")||{})[L("session")];$("proBox").classList.toggle("hide",!(u&&u.type!="particulier"));$("needLogin").classList.toggle("hide",ok);$("orderForm").classList.toggle("hide",!ok)}
 function order(){const[t,l]=calc();if(t<=0)return $("omsg").textContent="Ajoutez au moins un article.";if(!$("addr").value||!$("date").value)return $("omsg").textContent="Adresse et date requises.";
 const o=L("orders")||[];o.push({m:L("session"),d:$("date").value,s:$("slot").value,t:t+l,st:"En attente de collecte"});W("orders",o);$("omsg").className="ok";$("omsg").textContent="Commande enregistrée ✔";S.forEach((_,i)=>$("q"+i).value=0);calc()}
 ui();calc();

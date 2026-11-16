@@ -5,6 +5,23 @@
 ## 1. Concept
 Collecte à domicile → lavage, séchage, repassage (vêtements, draps) → livraison sous 48 h. Commande + compte client sur le site (`index.html`).
 
+## 1 bis. Clientèle visée
+| Segment | Besoin | Fréquence | Prix indicatif |
+|---|---|---|---|
+| **Particuliers** | Lavage/repassage vêtements et draps | ponctuelle ou abonnement | 3,50 €/kg ; repassage à la pièce |
+| **Restaurants / hôtels** | Nappes, serviettes, torchons, tabliers, draps, serviettes de bain | 2–3 tournées/semaine | 1,80–2,50 €/kg (selon volume et repassage plat) |
+| **Maisons de repos / hôpitaux / cliniques** | Draps, alèses, blouses, linge de résidents | quotidien ou 3×/semaine | 2,20–3 €/kg + marquage nominatif |
+| **Sociétés** | Tenues de travail, serviettes | hebdomadaire | abonnement mensuel |
+
+**Points clés par segment**
+- *Restaurants/hôtels* : gros volumes réguliers = revenu stable ; calandre indispensable (nappes, draps). Livraison tôt le matin.
+- *Santé (maisons de repos, hôpitaux)* : le plus exigeant mais le plus rentable à long terme. Il faut : lavage thermique ou désinfectant (60–90 °C ou chimique validé), **séparation stricte linge sale / linge propre** (locaux et véhicules, sens de marche en avant), traçabilité des lots et marquage nominatif des résidents, et idéalement la **certification RABC / norme EN 14065** (souvent exigée par les appels d'offres hospitaliers). Prévoir machines à **barrière sanitaire** (chargement côté sale, déchargement côté propre) → +4 000 à 10 000 € de matériel/aménagement et un local avec deux zones.
+- *Particuliers* : bon pour démarrer vite et se faire connaître, marges fortes mais volumes faibles.
+- Les clients pro se facturent **à la fin du mois** (factures + contrat) ; paiement en ligne pour les particuliers.
+
+**Stratégie conseillée** : démarrer avec particuliers + restaurants/hôtels (pas de norme médicale), puis ajouter maisons de repos une fois le local en 2 zones et la procédure d'hygiène en place ; l'hôpital public passe en général par appel d'offres.
+**Capacité** : 2 lave‑linge de 14 kg + 2 sèche‑linge ≈ 150–200 kg de linge/jour. Un seul contrat de maison de repos de 60 lits ≈ 80–100 kg/jour. Prévoir une machine de plus (ou un 3e lave‑linge de 25 kg) dès le premier gros contrat.
+
 ## 2. Équipement nécessaire
 | Poste | Modèle type | Neuf | Occasion |
 |---|---|---|---|
@@ -63,8 +80,11 @@ Dans la démo du site, le bouton « 🔌 Simuler fin de cycle » (dans Mon compt
 Panier moyen estimé : 6 kg lavés (21 €) + 5 chemises (12,50 €) + 1 drap (5 €) ≈ **38 €**, coût variable ≈ **17 €** → marge ≈ **21 €/commande**.
 Seuil = 1 200 € / 21 € ≈ **57 commandes/mois** (~2 par jour) pour couvrir les charges fixes, hors salaire de Souhaila. Objectif réaliste : 120 commandes/mois ≈ 1 300 € de bénéfice avant rémunération/impôts.
 
+## 5 bis. Effet des clients professionnels
+Pro à 2,40 €/kg avec coût variable ≈ 1,10 €/kg (volume, moins de collecte unitaire) → marge ≈ 1,30 €/kg. Un contrat de 80 kg/jour × 26 jours ≈ 2 080 kg/mois ≈ **2 700 € de marge/mois** à lui seul : un ou deux contrats pro couvrent les charges fixes (1 200 €).
+
 ## 6. Point site internet
-`souhaila/index.html` = **démo fonctionnelle** : tarifs, calcul de commande, inscription/connexion (email + mot de passe haché), historique. Les données sont stockées dans le navigateur uniquement. Pour le **vrai lancement** il faut un back-end (ex. Supabase/Firebase) + paiement (Stripe) + emails de confirmation + mentions légales/CGV/RGPD.
+`souhaila/index.html` = **démo fonctionnelle** : tarifs, calcul de commande, inscription/connexion (email + mot de passe haché), avec type de compte (particulier, restaurant/hôtel, santé, société) et demande de devis pour les pros, historique. Les données sont stockées dans le navigateur uniquement. Pour le **vrai lancement** il faut un back-end (ex. Supabase/Firebase) + paiement (Stripe) + emails de confirmation + mentions légales/CGV/RGPD.
 
 ## 7. Prochaines étapes
 1. Choisir le nom définitif et le statut (micro-entreprise, SASU…) – partie administrative.

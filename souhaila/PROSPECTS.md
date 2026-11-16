@@ -30,7 +30,7 @@ Je n'ai pas accès à ta ville ni à un annuaire d'entreprises : voici **qui cib
 
 ## 4. Modèle de message pro
 > Bonjour [Prénom],
-> Je lance **Fraîcheur & Co**, blanchisserie à [ville] : collecte, lavage, repassage et livraison de votre linge ([nappes/draps/blouses…]) selon votre rythme, avec suivi en ligne. Je vous propose un **essai gratuit** sur une première tournée pour que vous jugiez la qualité. Puis-je passer vous voir 10 minutes cette semaine ?
+> Je lance **Aqua**, blanchisserie à [ville] : collecte, lavage, repassage et livraison de votre linge ([nappes/draps/blouses…]) selon votre rythme, avec suivi en ligne. Je vous propose un **essai gratuit** sur une première tournée pour que vous jugiez la qualité. Puis-je passer vous voir 10 minutes cette semaine ?
 > Souhaila – 06 00 00 00 00
 
 ## 5. Suivi (copier dans un tableur)
@@ -39,7 +39,7 @@ Je n'ai pas accès à ta ville ni à un annuaire d'entreprises : voici **qui cib
 
 
 ## 6. Région de Liège – liste de départ
-Voir `prospects-liege.csv` (ouvrable dans Excel : séparateur « ; »). Elle contient ~30 premiers noms trouvés sur le web (restaurants, hôtels, maisons de repos, hôpitaux). **Beaucoup de numéros/adresses manquent ou sont anciens : à vérifier avant d'appeler.**
+Voir `prospects-liege.xlsx` (ouvrable dans Excel : séparateur « ; »). Elle contient ~30 premiers noms trouvés sur le web (restaurants, hôtels, maisons de repos, hôpitaux). **Beaucoup de numéros/adresses manquent ou sont anciens : à vérifier avant d'appeler.**
 
 ### Pour obtenir la liste COMPLÈTE (gratuit, Belgique)
 1. **Banque-Carrefour des Entreprises (BCE) – Public Search / Open Data** (economie.fgov.be) : filtrer par code NACE et province de Liège :

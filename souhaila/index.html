@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fraîcheur & Co – Lavage et repassage à domicile</title>
+<style>
+:root{--c:#0e7c86;--d:#0a4f56;--l:#e8f6f7;--t:#1d2b2e;--a:#f4a259}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Arial,sans-serif;color:var(--t);background:#fff}
+header{position:sticky;top:0;background:#fff;box-shadow:0 1px 6px #0002;display:flex;justify-content:space-between;align-items:center;padding:12px 5%;z-index:9;flex-wrap:wrap;gap:8px}
+.logo{font-weight:800;font-size:1.3rem;color:var(--c)}nav a{margin-left:16px;color:var(--t);text-decoration:none;font-weight:600;cursor:pointer}
+.hero{background:linear-gradient(135deg,var(--c),var(--d));color:#fff;padding:70px 5%;text-align:center}
+.hero h1{font-size:2.2rem;margin:0 0 12px}.hero p{max-width:640px;margin:0 auto 24px;font-size:1.1rem}
+.btn{background:var(--a);color:#222;border:0;padding:12px 24px;border-radius:8px;font-weight:700;font-size:1rem;cursor:pointer}
+section{padding:50px 5%;max-width:1000px;margin:auto}h2{color:var(--d)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.card{background:var(--l);border-radius:12px;padding:20px}
+table{width:100%;border-collapse:collapse}td,th{padding:10px;border-bottom:1px solid #ddd;text-align:left}
+input,select{width:100%;padding:10px;margin:6px 0 14px;border:1px solid #bbb;border-radius:8px;font-size:1rem}
+.box{background:#fff;border:1px solid #ddd;border-radius:12px;padding:24px;max-width:520px}
+.hide{display:none}.total{font-size:1.4rem;font-weight:800;color:var(--c)}.msg{color:#b00020}.ok{color:#0a7a2f}
+footer{background:var(--d);color:#fff;text-align:center;padding:24px}
+</style></head><body>
+<header><div class="logo">🧺 Fraîcheur &amp; Co</div>
+<nav><a onclick="go('home')">Accueil</a><a onclick="go('tarifs')">Tarifs</a><a onclick="go('commande')">Commander</a><a onclick="go('compte')" id="navCompte">Connexion</a></nav></header>
+
+<div id="home"><div class="hero"><h1>Votre linge lavé, séché, repassé et livré</h1>
+<p>Collecte à domicile, lavage professionnel, repassage express des chemises et des draps. Retour sous 48 h.</p>
+<button class="btn" onclick="go('commande')">Commander maintenant</button></div>
+<section><div class="grid">
+<div class="card"><h3>1. Vous commandez</h3>Choisissez vos services en ligne en 2 minutes.</div>
+<div class="card"><h3>2. On collecte</h3>Nous passons chez vous au créneau choisi.</div>
+<div class="card"><h3>3. On livre</h3>Linge propre, plié ou sur cintre, sous 48 h.</div></div></section></div>
+
+<section id="tarifs" class="hide"><h2>Nos tarifs</h2><table id="tbl"></table>
+<p>Collecte et livraison : <b>3 € / commande</b>, offertes dès 30 €.</p></section>
+
+<section id="commande" class="hide"><h2>Passer commande</h2>
+<div class="box"><div id="needLogin" class="msg hide">Connectez-vous ou créez un compte pour commander.</div>
+<div id="orderForm"><div id="lines"></div>
+<label>Adresse de collecte<input id="addr" placeholder="12 rue des Lilas, 75000 Paris"></label>
+<label>Date de collecte<input type="date" id="date"></label>
+<label>Créneau<select id="slot"><option>8h–12h</option><option>12h–16h</option><option>16h–20h</option></select></label>
+<p>Sous-total : <span id="sub">0,00</span> € · Collecte/livraison : <span id="liv">0,00</span> €</p>
+<p class="total">Total : <span id="tot">0,00</span> €</p>
+<button class="btn" onclick="order()">Valider la commande</button><p id="omsg"></p></div></div></section>
+
+<section id="compte" class="hide"><h2>Mon compte</h2>
+<div id="auth" class="box"><label>Prénom (inscription)<input id="nom"></label>
+<label>Email<input id="mail" type="email"></label><label>Mot de passe (8 caractères min.)<input id="pw" type="password"></label>
+<button class="btn" onclick="signup()">Créer mon compte</button> <button class="btn" style="background:#ddd" onclick="login()">Se connecter</button><p id="amsg" class="msg"></p></div>
+<div id="me" class="box hide"><h3 id="hi"></h3><button class="btn" style="background:#ddd" onclick="logout()">Déconnexion</button><h3>Mes commandes</h3><div id="hist"></div></div></section>
+
+<footer>© Fraîcheur &amp; Co · Version de démonstration (nom provisoire)</footer>
+<script>
+const S=[["Lavage + séchage + pliage (au kg, min. 5 kg)",3.5,"kg"],["Chemise repassée",2.5,"pièce"],["Pantalon / jupe repassé",3.5,"pièce"],["Drap 1 place repassé",4,"pièce"],["Drap 2 places repassé",5,"pièce"],["Housse de couette repassée",6,"pièce"],["Taie d'oreiller repassée",1.5,"pièce"]];
+const $=i=>document.getElementById(i),L=k=>JSON.parse(localStorage.getItem(k)||"null"),W=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const eur=n=>n.toFixed(2).replace(".",",");
+function go(p){["home","tarifs","commande","compte"].forEach(x=>$(x).classList.toggle("hide",x!==p));if(p=="commande")chk();if(p=="compte")ui();scrollTo(0,0)}
+$("tbl").innerHTML="<tr><th>Service</th><th>Prix</th></tr>"+S.map(s=>`<tr><td>${s[0]}</td><td>${eur(s[1])} € / ${s[2]}</td></tr>`).join("");
+$("lines").innerHTML=S.map((s,i)=>`<label>${s[0]} – ${eur(s[1])} €/${s[2]}<input type="number" min="0" value="0" id="q${i}" oninput="calc()"></label>`).join("");
+function calc(){let t=0;S.forEach((s,i)=>t+=s[1]*(+$("q"+i).value||0));const l=t>0&&t<30?3:0;$("sub").textContent=eur(t);$("liv").textContent=eur(l);$("tot").textContent=eur(t+l);return[t,l]}
+async function h(p){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(p));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+async function signup(){const m=$("mail").value.trim().toLowerCase(),p=$("pw").value;if(!/^\S+@\S+\.\S+$/.test(m)||p.length<8||!$("nom").value)return $("amsg").textContent="Prénom, email valide et mot de passe de 8 caractères minimum requis.";
+const u=L("users")||{};if(u[m])return $("amsg").textContent="Cet email a déjà un compte.";u[m]={nom:$("nom").value,hash:await h(p)};W("users",u);W("session",m);$("amsg").textContent="";ui()}
+async function login(){const m=$("mail").value.trim().toLowerCase(),u=(L("users")||{})[m];if(!u||u.hash!==await h($("pw").value))return $("amsg").textContent="Email ou mot de passe incorrect.";W("session",m);$("amsg").textContent="";ui()}
+function logout(){localStorage.removeItem("session");ui()}
+function ui(){const m=L("session"),u=m&&(L("users")||{})[m];$("auth").classList.toggle("hide",!!u);$("me").classList.toggle("hide",!u);$("navCompte").textContent=u?"👤 "+u.nom:"Connexion";
+if(u){$("hi").textContent="Bonjour "+u.nom;const o=(L("orders")||[]).filter(x=>x.m==m);$("hist").innerHTML=o.length?o.map(x=>`<p>${x.d} · ${x.s} · <b>${eur(x.t)} €</b> · ${x.st}</p>`).join(""):"Aucune commande."}}
+function chk(){const ok=!!L("session");$("needLogin").classList.toggle("hide",ok);$("orderForm").classList.toggle("hide",!ok)}
+function order(){const[t,l]=calc();if(t<=0)return $("omsg").textContent="Ajoutez au moins un article.";if(!$("addr").value||!$("date").value)return $("omsg").textContent="Adresse et date requises.";
+const o=L("orders")||[];o.push({m:L("session"),d:$("date").value,s:$("slot").value,t:t+l,st:"En attente de collecte"});W("orders",o);$("omsg").className="ok";$("omsg").textContent="Commande enregistrée ✔";S.forEach((_,i)=>$("q"+i).value=0);calc()}
+ui();calc();
+</script></body></html>

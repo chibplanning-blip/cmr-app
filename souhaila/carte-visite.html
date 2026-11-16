@@ -1,0 +1,16 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Cartes de visite</title>
+<style>
+@page{size:A4;margin:10mm}*{box-sizing:border-box}body{margin:0;font-family:system-ui,Arial,sans-serif}
+.s{display:grid;grid-template-columns:85mm 85mm;gap:0;justify-content:center;page-break-after:always}
+.c{width:85mm;height:55mm;border:.1mm dotted #aaa;padding:6mm;position:relative}
+.rec{background:#0e7c86;color:#fff}.rec b{font-size:15pt;display:block}.rec small{font-size:9pt}
+.ver{font-size:9.5pt;color:#1d2b2e}.ver b{font-size:12pt;color:#0a4f56;display:block}.ver p{margin:1.5mm 0}
+</style></head><body>
+<div class="s">
+<!-- Recto : 10 cartes -->
+<script>for(let i=0;i<10;i++)document.write('<div class="c rec"><div style="font-size:22pt">🧺</div><b>Fraîcheur &amp; Co</b><small>Lavage · Séchage · Repassage<br>Collecte &amp; livraison</small><div style="position:absolute;bottom:6mm;font-size:8.5pt">Particuliers · Restaurants · Santé · Entreprises</div></div>')</script>
+</div>
+<div class="s">
+<!-- Verso : 10 cartes -->
+<script>for(let i=0;i<10;i++)document.write('<div class="c ver"><b>Souhaila [NOM]</b><p>Gérante</p><p>📞 06 00 00 00 00<br>✉ contact@exemple.fr<br>🌐 www.exemple.fr</p><p style="color:#0e7c86"><b style="font-size:9pt">1er lavage –20 % : code BIENVENUE</b></p></div>')</script>
+</div></body></html>

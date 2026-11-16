@@ -63,7 +63,10 @@ const u=L("users")||{};if(u[m])return $("amsg").textContent="Cet email a déjà 
 async function login(){const m=$("mail").value.trim().toLowerCase(),u=(L("users")||{})[m];if(!u||u.hash!==await h($("pw").value))return $("amsg").textContent="Email ou mot de passe incorrect.";W("session",m);$("amsg").textContent="";ui()}
 function logout(){localStorage.removeItem("session");ui()}
 function ui(){const m=L("session"),u=m&&(L("users")||{})[m];$("auth").classList.toggle("hide",!!u);$("me").classList.toggle("hide",!u);$("navCompte").textContent=u?"👤 "+u.nom:"Connexion";
-if(u){$("hi").textContent="Bonjour "+u.nom;const o=(L("orders")||[]).filter(x=>x.m==m);$("hist").innerHTML=o.length?o.map(x=>`<p>${x.d} · ${x.s} · <b>${eur(x.t)} €</b> · ${x.st}</p>`).join(""):"Aucune commande."}}
+if(u){$("hi").textContent="Bonjour "+u.nom;const o=(L("orders")||[]).filter(x=>x.m==m);$("hist").innerHTML=o.length?o.map(x=>`<p>${x.d} · ${x.s} · <b>${eur(x.t)} €</b> · ${x.st} ${x.st!="Livrée"?`<button onclick="cycle(${(L("orders")||[]).indexOf(x)})" title="Démo : simule le signal de la machine connectée">🔌 Simuler fin de cycle</button>`:""}</p>`).join(""):"Aucune commande."}}
+const ETAPES=["En attente de collecte","Lavage terminé ✔","Séchage terminé ✔","Repassage terminé ✔","Livrée"];
+function cycle(i){const o=L("orders");const n=ETAPES.indexOf(o[i].st);o[i].st=ETAPES[Math.min(n+1,ETAPES.length-1)];W("orders",o);
+if(window.Notification&&Notification.permission=="granted")new Notification("Fraîcheur & Co",{body:"Commande : "+o[i].st});else if(window.Notification)Notification.requestPermission();ui()}
 function chk(){const ok=!!L("session");$("needLogin").classList.toggle("hide",ok);$("orderForm").classList.toggle("hide",!ok)}
 function order(){const[t,l]=calc();if(t<=0)return $("omsg").textContent="Ajoutez au moins un article.";if(!$("addr").value||!$("date").value)return $("omsg").textContent="Adresse et date requises.";
 const o=L("orders")||[];o.push({m:L("session"),d:$("date").value,s:$("slot").value,t:t+l,st:"En attente de collecte"});W("orders",o);$("omsg").className="ok";$("omsg").textContent="Commande enregistrée ✔";S.forEach((_,i)=>$("q"+i).value=0);calc()}

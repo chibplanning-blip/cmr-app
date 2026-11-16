@@ -16,7 +16,21 @@ Collecte à domicile → lavage, séchage, repassage (vêtements, draps) → liv
 | Véhicule utilitaire (ou leasing / auto-entrepreneur livreur) | – | 150–300 €/mois | – |
 
 **Solution repassage rapide** : calandre pour tout le plat (draps, housses, taies) + presse/table aspirante à vapeur pour chemises et pantalons. Un drap passe en 1 minute au lieu de 8–10 au fer.
+**Machines connectées : +~200 € (modules).** 
 **Budget machines : ~8 000 € en occasion / ~15 000 € en neuf** (2 laves + 2 sèches + calandre + presse) + ~1 500 € de petit matériel.
+
+## 2 bis. Machines connectées à l'application (fin de cycle)
+Objectif : quand une machine finit son cycle, l'appli prévient Souhaila (et met à jour le statut de la commande du client).
+
+**Option recommandée – prise/relais connecté sur chaque machine (marche avec n'importe quelle machine, même d'occasion)**
+- Un module de mesure de puissance Wi‑Fi (type Shelly Plug S / Shelly Pro 1PM, ~20–45 € pièce ; pour une machine triphasée, module avec pince ampèremétrique) par lave‑linge, sèche‑linge, calandre et presse.
+- Principe : puissance > seuil = cycle en cours ; puissance < seuil pendant ~2 min = **cycle terminé**. Le module envoie un webhook au serveur du site.
+- Le serveur change le statut de la commande (« Lavage terminé », « Séchage terminé »…) et envoie une notification push/SMS/e‑mail à Souhaila et, si voulu, au client.
+- Coût : 4 à 6 modules ≈ **100–250 €**.
+
+**Option 2 – machines pro nativement connectées** (Miele Professional, Electrolux Professional myPro) : alertes natives mais machines et abonnement plus chers (+500 à +1 500 €/machine). À envisager seulement en neuf.
+
+Dans la démo du site, le bouton « 🔌 Simuler fin de cycle » (dans Mon compte → commandes) montre ce comportement ; en production, c'est le webhook des machines qui le déclenche. Cela nécessite le back‑end (point 6).
 
 ## 3. Prix de revient (hypothèses)
 Électricité 0,25 €/kWh · eau 5 €/m³ · main-d'œuvre chargée 16 €/h.

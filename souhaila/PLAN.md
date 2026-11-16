@@ -22,6 +22,19 @@ Collecte à domicile → lavage, séchage, repassage (vêtements, draps) → liv
 **Stratégie conseillée** : démarrer avec particuliers + restaurants/hôtels (pas de norme médicale), puis ajouter maisons de repos une fois le local en 2 zones et la procédure d'hygiène en place ; l'hôpital public passe en général par appel d'offres.
 **Capacité** : 2 lave‑linge de 14 kg + 2 sèche‑linge ≈ 150–200 kg de linge/jour. Un seul contrat de maison de repos de 60 lits ≈ 80–100 kg/jour. Prévoir une machine de plus (ou un 3e lave‑linge de 25 kg) dès le premier gros contrat.
 
+## 1 ter. Particuliers : les personnes âgées
+**Pourquoi** : population qui vieillit, besoin réel (porter le linge, repasser, laver les draps lourds), clientèle fidèle et régulière.
+**Ce qu'il faut offrir**
+- **Commande par téléphone** (beaucoup de seniors n'utilisent pas internet) : Souhaila saisit la commande dans le site pour eux.
+- Collecte et livraison **à la porte**, même personne, créneau fixe chaque semaine ; paiement simple (virement, Bancontact au passage, ou facture mensuelle).
+- **Formule Sérénité** : 24 €/semaine (collecte incluse, 6 kg lavés/séchés/pliés + 3 pièces repassées). Coût estimé ≈ 13 €/semaine → marge ≈ 11 € par client et par semaine (~45 €/mois). Il faut ~25 clients seniors pour ~1 100 €/mois de marge. *(estimation à valider)*
+- Compte « proche » : un enfant peut commander et payer pour son parent.
+- Flyers en **gros caractères** ; ton simple et rassurant ; confiance = clé (prévoir une pièce d'identité/carte pro au passage).
+
+**Où les rencontrer (canaux de recommandation)** : pharmacies, médecins généralistes, kinésithérapeutes, infirmiers à domicile, CPAS et services seniors des communes, mutualités, résidences-services, services d'aide à domicile, clubs de seniors, paroisses, centres de jour. Offrir un flyer + un essai gratuit.
+
+**Titres-services (Belgique)** : le repassage et la lessive peuvent faire partie des activités des entreprises agréées titres-services (aide au client, moins cher pour lui). Cela demande un **agrément** et du personnel salarié. À vérifier auprès de la Région wallonne / SPW avant de promettre quoi que ce soit : cela peut beaucoup aider à vendre aux seniors, mais ajoute des obligations administratives.
+
 ## 2. Équipement nécessaire
 | Poste | Modèle type | Neuf | Occasion |
 |---|---|---|---|

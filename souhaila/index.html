@@ -32,7 +32,13 @@ footer{background:var(--d);color:#fff;text-align:center;padding:28px}
 <section><div class="grid">
 <div class="card"><h3>1. Vous commandez</h3>Choisissez vos services en ligne en 2 minutes.</div>
 <div class="card"><h3>2. On collecte</h3>Nous passons chez vous au créneau choisi.</div>
-<div class="card"><h3>3. On livre</h3>Linge propre, plié ou sur cintre, sous 48 h.</div></div></section></div>
+<div class="card"><h3>3. On livre</h3>Linge propre, plié ou sur cintre, sous 48 h.</div></div></section><section><h2>Un service pensé pour nos aînés</h2><div class="grid">
+<div class="card"><h3>📞 Commande par téléphone</h3>Pas d'ordinateur ? Un simple appel suffit : nous notons tout pour vous.</div>
+<div class="card"><h3>🚪 Collecte et livraison à la porte</h3>Nous venons chercher et rapporter le linge, jusque dans la chambre si besoin. Sans supplément pour les abonnés.</div>
+<div class="card"><h3>🤝 Même personne à chaque passage</h3>Un visage connu, ponctuel, avec un créneau fixe chaque semaine.</div>
+<div class="card"><h3>👪 Pour les proches</h3>Un enfant peut commander et payer pour ses parents depuis son compte.</div></div>
+<div class="card" style="margin-top:20px"><h3>Formule Sérénité – 24 € par semaine</h3>Collecte hebdomadaire incluse · jusqu'à 6 kg lavés, séchés et pliés · 3 pièces repassées · livraison au même créneau. Sans engagement.</div></section>
+</div>
 
 <section id="tarifs" class="hide"><h2>Nos tarifs – particuliers</h2><table id="tbl"></table>
 <h2>Professionnels</h2><div class="grid">
@@ -54,7 +60,7 @@ footer{background:var(--d);color:#fff;text-align:center;padding:28px}
 
 <section id="compte" class="hide"><h2>Mon compte</h2>
 <div id="auth" class="box"><label>Prénom (inscription)<input id="nom"></label>
-<label>Type de compte<select id="type"><option value="particulier">Particulier</option><option value="restaurant">Restaurant / hôtel</option><option value="sante">Maison de repos / hôpital / clinique</option><option value="societe">Société (vêtements de travail)</option></select></label>
+<label>Type de compte<select id="type"><option value="particulier">Particulier</option><option value="senior">Particulier senior / proche d'un senior</option><option value="restaurant">Restaurant / hôtel</option><option value="sante">Maison de repos / hôpital / clinique</option><option value="societe">Société (vêtements de travail)</option></select></label>
 <label>Email<input id="mail" type="email"></label><label>Mot de passe (8 caractères min.)<input id="pw" type="password"></label>
 <button class="btn" onclick="signup()">Créer mon compte</button> <button class="btn" style="background:#ddd" onclick="login()">Se connecter</button><p id="amsg" class="msg"></p></div>
 <div id="me" class="box hide"><h3 id="hi"></h3><button class="btn" style="background:#ddd" onclick="logout()">Déconnexion</button><h3>Mes commandes</h3><div id="hist"></div></div></section>
@@ -79,7 +85,7 @@ const ETAPES=["En attente de collecte","Lavage terminé ✔","Séchage terminé 
 function cycle(i){const o=L("orders");const n=ETAPES.indexOf(o[i].st);o[i].st=ETAPES[Math.min(n+1,ETAPES.length-1)];W("orders",o);
 if(window.Notification&&Notification.permission=="granted")new Notification("Aqua",{body:"Commande : "+o[i].st});else if(window.Notification)Notification.requestPermission();ui()}
 function devis(){if(!(+$("vol").value>0))return $("dmsg").textContent="Indiquez un volume.";const d=L("devis")||[];d.push({m:L("session"),v:$("vol").value,f:$("freq").value,t:$("det").value});W("devis",d);$("dmsg").textContent="Demande envoyée ✔ – nous vous répondons sous 24 h."}
-function chk(){const ok=!!L("session");const u=(L("users")||{})[L("session")];$("proBox").classList.toggle("hide",!(u&&u.type!="particulier"));$("needLogin").classList.toggle("hide",ok);$("orderForm").classList.toggle("hide",!ok)}
+function chk(){const ok=!!L("session");const u=(L("users")||{})[L("session")];$("proBox").classList.toggle("hide",!(u&&u.type!="particulier"&&u.type!="senior"));$("needLogin").classList.toggle("hide",ok);$("orderForm").classList.toggle("hide",!ok)}
 function order(){const[t,l]=calc();if(t<=0)return $("omsg").textContent="Ajoutez au moins un article.";if(!$("addr").value||!$("date").value)return $("omsg").textContent="Adresse et date requises.";
 const o=L("orders")||[];o.push({m:L("session"),d:$("date").value,s:$("slot").value,t:t+l,st:"En attente de collecte"});W("orders",o);$("omsg").className="ok";$("omsg").textContent="Commande enregistrée ✔";S.forEach((_,i)=>$("q"+i).value=0);calc()}
 ui();calc();

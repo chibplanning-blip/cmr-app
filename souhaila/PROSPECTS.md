@@ -36,3 +36,16 @@ Je n'ai pas accès à ta ville ni à un annuaire d'entreprises : voici **qui cib
 ## 5. Suivi (copier dans un tableur)
 | Nom | Type | Ville | Contact | Tel | Date 1er contact | Statut (à contacter / essai / devis / client) | Relance |
 |---|---|---|---|---|---|---|---|
+
+
+## 6. Région de Liège – liste de départ
+Voir `prospects-liege.csv` (ouvrable dans Excel : séparateur « ; »). Elle contient ~30 premiers noms trouvés sur le web (restaurants, hôtels, maisons de repos, hôpitaux). **Beaucoup de numéros/adresses manquent ou sont anciens : à vérifier avant d'appeler.**
+
+### Pour obtenir la liste COMPLÈTE (gratuit, Belgique)
+1. **Banque-Carrefour des Entreprises (BCE) – Public Search / Open Data** (economie.fgov.be) : filtrer par code NACE et province de Liège :
+   - 87.10 maisons de repos et de soins · 87.30 résidences-services
+   - 55.10 hôtels · 55.20 gîtes/B&B · 56.10 restaurants · 56.21 traiteurs
+   - 96.02 coiffure/soins de beauté · 93.13 salles de sport · 86.10 hôpitaux/cliniques
+2. **AViQ / Woonzorgweb / Ville de Liège (service Seniors)** : liste officielle des maisons de repos agréées.
+3. **Marchés publics** (bulletin des adjudications / e-Procurement) pour hôpitaux et CPAS.
+4. Google Maps : « restaurant Liège », « hôtel Herstal », « maison de repos Seraing / Chênée / Ans / Herstal / Verviers ».
